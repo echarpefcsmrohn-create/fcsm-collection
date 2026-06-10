@@ -22,21 +22,23 @@ const navItems = [
       <line x1="21" y1="21" x2="16.65" y2="16.65"/>
     </svg>
   )},
-  { id:'stats', label:'Stats', icon: (
+  { id:'daily', label:'Du jour', icon: (
     <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="w-5 h-5">
-      <path d="M18 20V10M12 20V4M6 20v-6"/>
+      <path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/>
+      <path d="M12 6v6l4 2"/>
     </svg>
   )},
 ]
 
 export default function BottomNav({ current, onNavigate, onAdd }) {
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-bleu2 border-t-2 border-jaune flex z-50 safe-bottom">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] border-t-2 border-jaune flex z-50 safe-bottom"
+      style={{ background: '#001f5c' }}>
       {navItems.map(item => {
         if (item.id === 'add') return (
           <div key="add" className="flex-1 flex flex-col items-center justify-center cursor-pointer relative -top-4" onClick={onAdd}>
             <motion.div
-              className="w-14 h-14 bg-jaune rounded-full flex items-center justify-center shadow-lg"
+              className="w-14 h-14 bg-jaune rounded-full flex items-center justify-center"
               style={{ boxShadow: '0 4px 24px rgba(245,196,0,0.45)' }}
               whileTap={{ scale: 0.88 }}
             >
