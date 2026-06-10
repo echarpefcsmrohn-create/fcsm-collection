@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { playNav, vibrate } from '../lib/sounds'
 
 const navItems = [
   { id:'home', label:'Accueil', icon: (
@@ -55,7 +56,7 @@ export default function BottomNav({ current, onNavigate, onAdd }) {
           <motion.button
             key={item.id}
             className={`flex-1 flex flex-col items-center gap-0.5 py-3 border-none bg-transparent cursor-pointer ${isActive ? 'text-jaune' : 'text-muted'}`}
-            onClick={() => onNavigate(item.id)}
+            onClick={() => { playNav(); vibrate([8]); onNavigate(item.id) }}
             whileTap={{ scale: 0.9 }}
           >
             <span style={isActive ? { filter: 'drop-shadow(0 0 4px rgba(245,196,0,0.6))' } : {}}>

@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
 import { getEraLabel, getScarfNumber, ERAS } from '../lib/eras'
 import { uploadToCloudinary, removeBackground } from '../lib/cloudinary'
+import { playDelete, vibrate } from '../lib/sounds'
 
-export default function ScarfDetail({ scarf, onClose }) {
+export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
   const { collection, update, remove } = useCollection()
   const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState(scarf.Name)
@@ -14,6 +15,7 @@ export default function ScarfDetail({ scarf, onClose }) {
   const [lightbox, setLightbox] = useState(false)
   const [reprocessing, setReprocessing] = useState(false)
   const [reprocessStep, setReprocessStep] = useState('')
+  const touchStartX = useRef(null)
 
   const num = getScarfNumber(scarf, collection)
   const eraLabel = getEraLabel(scarf.era)
@@ -35,8 +37,21 @@ export default function ScarfDetail({ scarf, onClose }) {
 
   const handleDelete = async () => {
     if (!confirm('Supprimer cette écharpe ?')) return
+    vibrate([50, 30, 50])
+    playDelete()
     await remove(scarf.id)
     onClose()
+  }
+
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX }
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return
+    const diff = touchStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 60) {
+      if (diff > 0 && onNext) onNext()
+      else if (diff < 0 && onPrev) onPrev()
+    }
+    touchStartX.current = null
   }
 
   const handleReprocess = async () => {
@@ -65,7 +80,9 @@ export default function ScarfDetail({ scarf, onClose }) {
     <AnimatePresence>
       <motion.div className="fixed inset-0 bg-noir z-[300] overflow-y-auto no-scrollbar"
         initial={{ opacity:0, x:30 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:30 }}
-        transition={{ type:'spring', damping:25, stiffness:300 }}>
+        transition={{ type:'spring', damping:25, stiffness:300 }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}>
 
         {/* Top buttons */}
         <div className="fixed top-safe top-4 left-4 z-20 flex gap-2">

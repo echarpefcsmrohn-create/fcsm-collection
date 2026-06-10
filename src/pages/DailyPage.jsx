@@ -3,38 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
 import { getEraLabel, getScarfNumber } from '../lib/eras'
 import PageHeader from '../components/PageHeader'
-
-// Generates slot machine tick sound using Web Audio API
-function createTickSound(audioCtx, freq = 800, vol = 0.3) {
-  const osc = audioCtx.createOscillator()
-  const gain = audioCtx.createGain()
-  osc.connect(gain)
-  gain.connect(audioCtx.destination)
-  osc.frequency.value = freq
-  osc.type = 'square'
-  gain.gain.setValueAtTime(vol, audioCtx.currentTime)
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08)
-  osc.start(audioCtx.currentTime)
-  osc.stop(audioCtx.currentTime + 0.08)
-}
-
-function createWinSound(audioCtx) {
-  // Victory fanfare
-  const notes = [523, 659, 784, 1047]
-  notes.forEach((freq, i) => {
-    const osc = audioCtx.createOscillator()
-    const gain = audioCtx.createGain()
-    osc.connect(gain)
-    gain.connect(audioCtx.destination)
-    osc.frequency.value = freq
-    osc.type = 'triangle'
-    const t = audioCtx.currentTime + i * 0.12
-    gain.gain.setValueAtTime(0.4, t)
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25)
-    osc.start(t)
-    osc.stop(t + 0.25)
-  })
-}
+import { playTick, playWin, vibrate } from '../lib/sounds'
 
 export default function DailyPage() {
   const { collection } = useCollection()
@@ -43,15 +12,7 @@ export default function DailyPage() {
   const [items, setItems] = useState([])
   const [offset, setOffset] = useState(0)
   const [transitioning, setTransitioning] = useState(false)
-  const audioCtxRef = useRef(null)
   const tickIntervalRef = useRef(null)
-
-  const getAudioCtx = () => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)()
-    }
-    return audioCtxRef.current
-  }
 
   const spin = useCallback(() => {
     if (spinning || !collection.length) return
@@ -74,15 +35,14 @@ export default function DailyPage() {
     const newOffset = winnerIdx * itemW - (wrapW / 2) + (itemW / 2) + (Math.random() * 30 - 15)
 
     // Start tick sounds
-    const ctx = getAudioCtx()
     let tickCount = 0
-    let tickDelay = 60 // ms, starts fast
+    let tickDelay = 60
 
     const scheduleTick = () => {
       if (tickCount > 80) return
-      createTickSound(ctx, 600 + Math.random() * 200, 0.15)
+      playTick(600 + Math.random() * 200)
+      vibrate([5])
       tickCount++
-      // Slow down over time
       tickDelay = Math.min(tickDelay * 1.04, 400)
       tickIntervalRef.current = setTimeout(scheduleTick, tickDelay)
     }
@@ -96,8 +56,8 @@ export default function DailyPage() {
       setTransitioning(true)
       setSpinning(false)
       setWinner(picked)
-      // Win sound
-      setTimeout(() => createWinSound(getAudioCtx()), 300)
+      vibrate([30, 20, 80])
+      setTimeout(() => playWin(), 300)
     }, 7200)
   }, [collection, spinning])
 

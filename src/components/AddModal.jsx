@@ -3,9 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
 import { ERAS } from '../lib/eras'
 import { uploadToCloudinary, removeBackground, compressImage } from '../lib/cloudinary'
+import { playAdd, vibrate } from '../lib/sounds'
+import confetti from 'canvas-confetti'
 
 const PROXY_URL = 'https://fcsm-ai-proxy.echarpe-fcsm-rohn.workers.dev/'
 function getAnthropicKey() { return localStorage.getItem('fcsm_anthropic_key') || '' }
+
+function launchConfetti() {
+  const colors = ['#F5C400', '#D4A900', '#003087', '#ffffff']
+  confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 }, colors })
+  setTimeout(() => confetti({ particleCount: 40, spread: 50, origin: { y: 0.5 }, colors }), 200)
+}
 
 export default function AddModal({ open, onClose }) {
   const { add } = useCollection()
@@ -105,6 +113,9 @@ export default function AddModal({ open, onClose }) {
         photo_url,
         added_at: new Date().toISOString()
       })
+      vibrate([30, 20, 60])
+      playAdd()
+      launchConfetti()
       handleClose()
     } catch (e) {
       console.error(e)

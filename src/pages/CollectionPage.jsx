@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
 import ScarfCard from '../components/ScarfCard'
+import SkeletonCard from '../components/SkeletonCard'
 import PageHeader from '../components/PageHeader'
 import { ERAS, ERA_ORDER } from '../lib/eras'
 import ScarfDetail from '../components/ScarfDetail'
@@ -15,7 +16,7 @@ const SORTS = [
 ]
 
 export default function CollectionPage() {
-  const { collection } = useCollection()
+  const { collection, loading } = useCollection()
   const [search, setSearch] = useState('')
   const [filterEra, setFilterEra] = useState('all')
   const [sort, setSort] = useState('date-desc')
@@ -82,7 +83,11 @@ export default function CollectionPage() {
 
       {/* Grid */}
       <div className="px-4 pt-2">
-        {data.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-2 gap-3">
+            {Array(6).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : data.length === 0 ? (
           <div className="text-center py-16 text-muted">
             <div className="text-5xl opacity-20 mb-3">🧣</div>
             <div className="font-bebas text-2xl tracking-widest">
@@ -92,15 +97,36 @@ export default function CollectionPage() {
         ) : (
           <motion.div className="grid grid-cols-2 gap-3" layout>
             <AnimatePresence>
-              {data.map(s => (
-                <ScarfCard key={s.id} scarf={s} onClick={setSelected} />
+              {data.map((s, i) => (
+                <motion.div
+                  key={s.id}
+                  initial={{ opacity:0, y:20 }}
+                  animate={{ opacity:1, y:0 }}
+                  exit={{ opacity:0, scale:0.9 }}
+                  transition={{ delay: i * 0.04, duration:0.3 }}
+                >
+                  <ScarfCard scarf={s} onClick={setSelected} />
+                </motion.div>
               ))}
             </AnimatePresence>
           </motion.div>
         )}
       </div>
 
-      {selected && <ScarfDetail scarf={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <ScarfDetail
+          scarf={selected}
+          onClose={() => setSelected(null)}
+          onPrev={() => {
+            const idx = data.findIndex(s => s.id === selected.id)
+            if (idx > 0) setSelected(data[idx - 1])
+          }}
+          onNext={() => {
+            const idx = data.findIndex(s => s.id === selected.id)
+            if (idx < data.length - 1) setSelected(data[idx + 1])
+          }}
+        />
+      )}
       <AnimatePresence>
         {showPresentation && <PresentationMode scarves={data} onClose={() => setShowPresentation(false)} />}
       </AnimatePresence>
