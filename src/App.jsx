@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CollectionProvider, useCollection } from './context/CollectionContext'
+import { ThemeProvider } from './context/ThemeContext'
 import SplashScreen from './components/SplashScreen'
 import BottomNav from './components/BottomNav'
 import PullToRefresh from './components/PullToRefresh'
@@ -60,8 +61,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <CollectionProvider>
-      <AppContent />
-    </CollectionProvider>
+    <ThemeProvider>
+      <CollectionProvider>
+        <AppContent />
+      </CollectionProvider>
+    </ThemeProvider>
   )
 }

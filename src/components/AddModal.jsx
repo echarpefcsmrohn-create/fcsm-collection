@@ -83,18 +83,52 @@ export default function AddModal({ open, onClose }) {
       const url = URL.createObjectURL(nobg)
       setPreview(url)
       setStep('✅ Fond supprimé !')
-      // Check doublon in background
       const reader = new FileReader()
-      reader.onload = e => checkDoublon(nobg, e.target.result)
+      reader.onload = e => {
+        checkDoublon(nobg, e.target.result)
+        suggestEraAndName(e.target.result)
+      }
       reader.readAsDataURL(nobg)
     } catch {
       setProcessedFile(file)
       setStep('⚠️ Photo originale utilisée')
       const reader = new FileReader()
-      reader.onload = e => checkDoublon(file, e.target.result)
+      reader.onload = e => {
+        checkDoublon(file, e.target.result)
+        suggestEraAndName(e.target.result)
+      }
       reader.readAsDataURL(file)
     }
     setTimeout(() => setProcessing(false), 1000)
+  }
+
+  const suggestEraAndName = async (dataUrl) => {
+    if (!getAnthropicKey()) return
+    try {
+      const compressed = await compressImage(dataUrl, 400)
+      const base64 = compressed.split(',')[1]
+      const r = await fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'x-api-key': getAnthropicKey(), 'anthropic-version':'2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-opus-4-5', max_tokens: 200,
+          system: 'Tu reponds UNIQUEMENT en JSON valide.',
+          messages: [{ role:'user', content: [
+            { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:base64 } },
+            { type:'text', text:`Analyse cette écharpe FCSM. Réponds en JSON: {"name":"nom court descriptif ex: Finale CdF 2007 vs PSG","era":"une de ces valeurs: 1930-1940|1940-1980|1990-1994|1994-1997|1997-2000|2000-2004|2004-2010|2010-2015|2015-auj ou null si incertain"}` }
+          ]}]
+        })
+      })
+      if (!r.ok) return
+      const data = await r.json()
+      const match = data.content[0].text.match(/\{[\s\S]*\}/)
+      if (!match) return
+      const res = JSON.parse(match[0])
+      if (res.name && !name) setName(res.name)
+      if (res.era) setEra(res.era)
+      setStep('🤖 Nom et ère suggérés par l\'IA !')
+      setTimeout(() => setStep(''), 2000)
+    } catch(e) { console.error('AI suggest failed:', e) }
   }
 
   const handleSave = async () => {
