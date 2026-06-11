@@ -50,6 +50,32 @@ export default function HomePage({ onNavigate }) {
         ))}
       </div>
 
+      {/* QUICK ACTIONS */}
+      <div className="px-4 pt-4 grid grid-cols-2 gap-3">
+        <motion.button
+          className="bg-surface border border-bord rounded-2xl p-4 flex items-center gap-3 cursor-pointer"
+          whileTap={{ scale:0.95 }}
+          onClick={() => onNavigate('daily')}
+          initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.15 }}>
+          <span className="text-2xl">🎲</span>
+          <div className="text-left">
+            <div className="font-bebas text-sm tracking-widest text-jaune">DU JOUR</div>
+            <div className="text-muted text-xs">Roulette</div>
+          </div>
+        </motion.button>
+        <motion.button
+          className="bg-surface border border-bord rounded-2xl p-4 flex items-center gap-3 cursor-pointer"
+          whileTap={{ scale:0.95 }}
+          onClick={() => onNavigate('verify')}
+          initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }}>
+          <span className="text-2xl">🔍</span>
+          <div className="text-left">
+            <div className="font-bebas text-sm tracking-widest text-jaune">VÉRIFIER</div>
+            <div className="text-muted text-xs">Anti-doublon</div>
+          </div>
+        </motion.button>
+      </div>
+
       {/* RECENT */}
       <div className="px-4 pt-6">
         <div className="flex items-center gap-2 mb-3">

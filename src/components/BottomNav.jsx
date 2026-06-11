@@ -23,10 +23,14 @@ const navItems = [
       <line x1="21" y1="21" x2="16.65" y2="16.65"/>
     </svg>
   )},
-  { id:'daily', label:'Du jour', icon: (
+  { id:'stats', label:'Stats', icon: (
     <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="w-5 h-5">
-      <path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/>
-      <path d="M12 6v6l4 2"/>
+      <path d="M18 20V10M12 20V4M6 20v-6"/>
+    </svg>
+  )},
+  { id:'stats', label:'Stats', icon: (
+    <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="w-5 h-5">
+      <path d="M18 20V10M12 20V4M6 20v-6"/>
     </svg>
   )},
 ]
@@ -39,16 +43,16 @@ export default function BottomNav({ current, onNavigate, onAdd }) {
         if (item.id === 'add') return (
           <div key="add" className="flex-1 flex flex-col items-center justify-center cursor-pointer relative -top-4" onClick={onAdd}>
             <motion.div
-              className="w-14 h-14 bg-jaune rounded-full flex items-center justify-center"
+              className="w-12 h-12 bg-jaune rounded-full flex items-center justify-center"
               style={{ boxShadow: '0 4px 24px rgba(245,196,0,0.45)' }}
               whileTap={{ scale: 0.88 }}
             >
-              <svg fill="none" stroke="#001f5c" strokeWidth="2.5" viewBox="0 0 24 24" className="w-7 h-7">
+              <svg fill="none" stroke="#001f5c" strokeWidth="2.5" viewBox="0 0 24 24" className="w-6 h-6">
                 <line x1="12" y1="5" x2="12" y2="19"/>
                 <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
             </motion.div>
-            <span className="text-muted text-[0.5rem] mt-1 uppercase tracking-wide">Ajouter</span>
+            <span className="text-muted text-[0.48rem] mt-1 uppercase tracking-wide">Ajouter</span>
           </div>
         )
         const isActive = current === item.id
@@ -62,7 +66,7 @@ export default function BottomNav({ current, onNavigate, onAdd }) {
             <span style={isActive ? { filter: 'drop-shadow(0 0 4px rgba(245,196,0,0.6))' } : {}}>
               {item.icon}
             </span>
-            <span className="text-[0.5rem] font-semibold uppercase tracking-wide">{item.label}</span>
+            <span className="text-[0.46rem] font-semibold uppercase tracking-wide">{item.label}</span>
           </motion.button>
         )
       })}
