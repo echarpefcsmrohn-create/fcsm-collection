@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CollectionProvider } from './context/CollectionContext'
+import { CollectionProvider, useCollection } from './context/CollectionContext'
 import SplashScreen from './components/SplashScreen'
 import BottomNav from './components/BottomNav'
+import PullToRefresh from './components/PullToRefresh'
 import HomePage from './pages/HomePage'
 import CollectionPage from './pages/CollectionPage'
 import VerifyPage from './pages/VerifyPage'
@@ -16,20 +17,21 @@ const pageVariants = {
   exit: { opacity: 0, y: -10 }
 }
 
-export default function App() {
+function AppContent() {
   const [splashDone, setSplashDone] = useState(false)
   const [page, setPage] = useState('home')
   const [showAdd, setShowAdd] = useState(false)
+  const { load } = useCollection()
 
   return (
-    <CollectionProvider>
-      <div className="max-w-[480px] mx-auto min-h-screen bg-noir overflow-x-hidden">
-        <AnimatePresence>
-          {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
-        </AnimatePresence>
+    <div className="max-w-[480px] mx-auto min-h-screen bg-noir overflow-x-hidden">
+      <AnimatePresence>
+        {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
+      </AnimatePresence>
 
-        {splashDone && (
-          <>
+      {splashDone && (
+        <>
+          <PullToRefresh onRefresh={load}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={page}
@@ -46,12 +48,20 @@ export default function App() {
                 {page === 'daily' && <DailyPage />}
               </motion.div>
             </AnimatePresence>
+          </PullToRefresh>
 
-            <BottomNav current={page} onNavigate={setPage} onAdd={() => setShowAdd(true)} />
-            <AddModal open={showAdd} onClose={() => setShowAdd(false)} />
-          </>
-        )}
-      </div>
+          <BottomNav current={page} onNavigate={setPage} onAdd={() => setShowAdd(true)} />
+          <AddModal open={showAdd} onClose={() => setShowAdd(false)} />
+        </>
+      )}
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <CollectionProvider>
+      <AppContent />
     </CollectionProvider>
   )
 }
