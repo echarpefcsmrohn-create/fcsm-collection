@@ -43,7 +43,38 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
     onClose()
   }
 
-  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX }
+  const [rotating, setRotating] = useState(false)
+  const [rotation, setRotation] = useState(0)
+
+  const handleRotate = async () => {
+    if (!currentPhoto || rotating) return
+    setRotating(true)
+    try {
+      // Rotate image 90 degrees
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      await new Promise((resolve, reject) => {
+        img.onload = resolve
+        img.onerror = reject
+        img.src = currentPhoto
+      })
+      const canvas = document.createElement('canvas')
+      canvas.width = img.height
+      canvas.height = img.width
+      const ctx = canvas.getContext('2d')
+      ctx.translate(canvas.width / 2, canvas.height / 2)
+      ctx.rotate(90 * Math.PI / 180)
+      ctx.drawImage(img, -img.width / 2, -img.height / 2)
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'))
+      const file = new File([blob], 'rotated.png', { type: 'image/png' })
+      const url = await uploadToCloudinary(file)
+      await update(scarf.id, { photo_url: url })
+      setRotation(r => r + 90)
+    } catch(e) {
+      console.error(e)
+    }
+    setRotating(false)
+  }
   const handleTouchEnd = (e) => {
     if (touchStartX.current === null) return
     const diff = touchStartX.current - e.changedTouches[0].clientX
@@ -92,6 +123,12 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
           </motion.button>
         </div>
         <div className="fixed top-4 right-4 z-20 flex gap-2">
+          <motion.button onClick={handleRotate} disabled={rotating} whileTap={{ scale:0.9 }}
+            className="w-10 h-10 rounded-full bg-noir/80 border border-jaune/50 text-jaune flex items-center justify-center cursor-pointer backdrop-blur-sm disabled:opacity-50">
+            {rotating
+              ? <div className="w-4 h-4 border-2 border-jaune/30 border-t-jaune rounded-full animate-spin-slow" />
+              : '🔄'}
+          </motion.button>
           <motion.button onClick={() => setEditing(!editing)} whileTap={{ scale:0.9 }}
             className={`w-10 h-10 rounded-full border flex items-center justify-center cursor-pointer backdrop-blur-sm ${editing ? 'bg-jaune border-jaune text-bleu2' : 'bg-noir/80 border-jaune text-jaune'}`}>
             ✏️
