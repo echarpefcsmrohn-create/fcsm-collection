@@ -41,23 +41,6 @@ export async function removeBackground(file) {
   })
   if (!r.ok) throw new Error('remove.bg échoué')
   const blob = await r.blob()
-  // Keep transparency — no white background
-  return new Promise(resolve => {
-    const url = URL.createObjectURL(blob)
-    const img = new Image()
-    img.onload = () => {
-      const W = 600, H = 1200
-      const c = document.createElement('canvas')
-      c.width = W; c.height = H
-      const ctx = c.getContext('2d')
-      ctx.clearRect(0, 0, W, H)
-      const scale = Math.min(W/img.width, H/img.height) * 0.98
-      const x = (W - img.width*scale) / 2
-      const y = (H - img.height*scale) / 2
-      ctx.drawImage(img, x, y, img.width*scale, img.height*scale)
-      URL.revokeObjectURL(url)
-      c.toBlob(blob => resolve(new File([blob], 'photo_nobg.png', { type:'image/png' })), 'image/png')
-    }
-    img.src = url
-  })
+  // Return PNG transparent as-is from remove.bg — no resize, no white bg
+  return new File([blob], 'photo_nobg.png', { type: 'image/png' })
 }

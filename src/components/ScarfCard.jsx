@@ -20,9 +20,9 @@ export default function ScarfCard({ scarf, onClick }) {
         style={{ background: 'linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #0a1628 100%)' }}>
         {photo
           ? <img src={photo} alt={scarf.Name}
-              className="w-full h-full object-contain p-2"
+              className="w-full h-full"
               loading="lazy"
-              style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }} />
+              style={{ objectFit: 'contain', padding: '4px', filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.6))' }} />
           : <span className="text-4xl opacity-20">🧣</span>}
         {/* Subtle gold shimmer overlay */}
         <div className="absolute inset-0 pointer-events-none"
