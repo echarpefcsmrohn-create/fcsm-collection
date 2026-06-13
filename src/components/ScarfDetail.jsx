@@ -75,6 +75,8 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
     }
     setRotating(false)
   }
+
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX }
   const handleTouchEnd = (e) => {
     if (touchStartX.current === null) return
     const diff = touchStartX.current - e.changedTouches[0].clientX
