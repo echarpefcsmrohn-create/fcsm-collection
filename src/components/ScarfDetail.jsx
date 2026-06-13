@@ -124,6 +124,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
         </div>
         <div className="fixed top-4 right-4 z-20 flex gap-2">
           <motion.button onClick={handleRotate} disabled={rotating} whileTap={{ scale:0.9 }}
+            title="Pivoter la photo"
             className="w-10 h-10 rounded-full bg-noir/80 border border-jaune/50 text-jaune flex items-center justify-center cursor-pointer backdrop-blur-sm disabled:opacity-50">
             {rotating
               ? <div className="w-4 h-4 border-2 border-jaune/30 border-t-jaune rounded-full animate-spin-slow" />
