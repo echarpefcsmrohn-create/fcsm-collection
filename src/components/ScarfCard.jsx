@@ -16,19 +16,26 @@ export default function ScarfCard({ scarf, onClick }) {
       onClick={() => onClick(scarf)}
       layout
     >
-      <div className="aspect-[4/3] bg-surface2 overflow-hidden flex items-center justify-center relative">
+      <div className="aspect-[4/3] overflow-hidden flex items-center justify-center relative"
+        style={{ background: 'linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #0a1628 100%)' }}>
         {photo
-          ? <img src={photo} alt={scarf.Name} className="w-full h-full object-cover" loading="lazy" />
+          ? <img src={photo} alt={scarf.Name}
+              className="w-full h-full object-contain p-2"
+              loading="lazy"
+              style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))' }} />
           : <span className="text-4xl opacity-20">🧣</span>}
+        {/* Subtle gold shimmer overlay */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(245,196,0,0.04) 0%, transparent 70%)' }} />
         {scarf.era && (
-          <div className="absolute top-1.5 left-1.5 bg-noir/75 border border-jaune/50 rounded px-1.5 py-0.5 text-jaune text-[0.58rem] font-bold backdrop-blur-sm">
+          <div className="absolute top-1.5 left-1.5 bg-noir/80 border border-jaune/40 rounded-md px-1.5 py-0.5 text-jaune text-[0.58rem] font-bold backdrop-blur-sm">
             {eraLabel}
           </div>
         )}
       </div>
-      <div className="p-2.5 pb-3">
-        <div className="text-jaune font-bebas text-xs tracking-wide">#{num}</div>
-        <div className="text-sm font-semibold truncate text-white">{scarf.Name}</div>
+      <div className="p-2.5 pb-3 bg-surface">
+        <div className="text-jaune font-bebas text-xs tracking-wide opacity-70">#{num}</div>
+        <div className="text-sm font-semibold truncate text-white leading-tight">{scarf.Name}</div>
         <div className="text-[0.7rem] text-muted mt-0.5">
           {scarf.price ? `${scarf.price} €` : eraLabel || '—'}
         </div>
