@@ -124,23 +124,23 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
 
           {/* Top buttons */}
           <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-12 pb-4">
-            <motion.button onClick={onClose} whileTap={{ scale:0.9 }}
+            <motion.button onClick={(e) => { e.stopPropagation(); onClose() }} whileTap={{ scale:0.9 }}
               className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer text-white text-xl"
               style={{ background:'rgba(8,12,26,0.7)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,0.1)' }}>
               ←
             </motion.button>
             <div className="flex gap-2">
-              <motion.button onClick={handleRotate} disabled={rotating} whileTap={{ scale:0.9 }}
+              <motion.button onClick={(e) => { e.stopPropagation(); handleRotate() }} disabled={rotating} whileTap={{ scale:0.9 }}
                 className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
                 style={{ background:'rgba(8,12,26,0.7)', backdropFilter:'blur(12px)', border:'1px solid rgba(245,196,0,0.3)' }}>
                 {rotating ? <div className="w-4 h-4 border-2 border-jaune/30 border-t-jaune rounded-full animate-spin-slow"/> : <span className="text-jaune">🔄</span>}
               </motion.button>
-              <motion.button onClick={() => setEditing(!editing)} whileTap={{ scale:0.9 }}
+              <motion.button onClick={(e) => { e.stopPropagation(); setEditing(!editing) }} whileTap={{ scale:0.9 }}
                 className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
                 style={{ background: editing ? 'rgba(245,196,0,0.9)' : 'rgba(8,12,26,0.7)', backdropFilter:'blur(12px)', border:'1px solid rgba(245,196,0,0.3)' }}>
                 <span style={{ filter: editing ? 'none' : '' }}>✏️</span>
               </motion.button>
-              <motion.button onClick={handleDelete} whileTap={{ scale:0.9 }}
+              <motion.button onClick={(e) => { e.stopPropagation(); handleDelete() }} whileTap={{ scale:0.9 }}
                 className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
                 style={{ background:'rgba(8,12,26,0.7)', backdropFilter:'blur(12px)', border:'1px solid rgba(239,68,68,0.4)' }}>
                 🗑
