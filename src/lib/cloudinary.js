@@ -41,7 +41,7 @@ export async function removeBackground(file) {
   })
   if (!r.ok) throw new Error('remove.bg échoué')
   const blob = await r.blob()
-  // Add white background
+  // Keep transparency — no white background
   return new Promise(resolve => {
     const url = URL.createObjectURL(blob)
     const img = new Image()
@@ -50,8 +50,7 @@ export async function removeBackground(file) {
       const c = document.createElement('canvas')
       c.width = W; c.height = H
       const ctx = c.getContext('2d')
-      ctx.fillStyle = '#FFFFFF'
-      ctx.fillRect(0, 0, W, H)
+      ctx.clearRect(0, 0, W, H)
       const scale = Math.min(W/img.width, H/img.height) * 0.98
       const x = (W - img.width*scale) / 2
       const y = (H - img.height*scale) / 2
