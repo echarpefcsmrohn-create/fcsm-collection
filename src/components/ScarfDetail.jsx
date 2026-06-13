@@ -112,8 +112,10 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
   return (
     <AnimatePresence>
       <motion.div className="fixed inset-0 bg-noir z-[300] overflow-y-auto no-scrollbar"
-        initial={{ opacity:0, x:30 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:30 }}
-        transition={{ type:'spring', damping:25, stiffness:300 }}
+        initial={{ x:'100%' }} 
+        animate={{ x:0 }} 
+        exit={{ x:'100%' }}
+        transition={{ type:'spring', damping:30, stiffness:300 }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}>
 
