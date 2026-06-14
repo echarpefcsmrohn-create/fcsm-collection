@@ -78,17 +78,20 @@ export default function AddModal({ open, onClose }) {
     setProcessing(true)
     setStep('🪄 Détourage en cours...')
     try {
-      const nobg = await removeBackground(file)
-      setProcessedFile(nobg)
-      const url = URL.createObjectURL(nobg)
-      setPreview(url)
-      setStep('✅ Fond supprimé !')
-      const reader = new FileReader()
-      reader.onload = e => {
-        checkDoublon(nobg, e.target.result)
-        suggestEraAndName(e.target.result)
+      const result = await removeBackground(file)
+      if (result.isCloudinary) {
+        // Already uploaded to Cloudinary with bg removed
+        setProcessedFile({ cloudinaryUrl: result.cloudinaryUrl })
+        setPreview(result.cloudinaryUrl)
+        setStep('✅ Fond supprimé !')
+        // Use original file for AI analysis
+        const reader = new FileReader()
+        reader.onload = e => {
+          checkDoublon(file, e.target.result)
+          suggestEraAndName(e.target.result)
+        }
+        reader.readAsDataURL(file)
       }
-      reader.readAsDataURL(nobg)
     } catch {
       setProcessedFile(file)
       setStep('⚠️ Photo originale utilisée')
@@ -137,8 +140,13 @@ export default function AddModal({ open, onClose }) {
     try {
       let photo_url = null
       if (processedFile) {
-        setStep('📤 Upload en cours...')
-        photo_url = await uploadToCloudinary(processedFile)
+        if (processedFile.cloudinaryUrl) {
+          // Already on Cloudinary (bg removal done)
+          photo_url = processedFile.cloudinaryUrl
+        } else {
+          setStep('📤 Upload en cours...')
+          photo_url = await uploadToCloudinary(processedFile)
+        }
       }
       await add({
         Name: name.trim(),

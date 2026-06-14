@@ -31,16 +31,20 @@ export async function uploadToCloudinary(file) {
 }
 
 export async function removeBackground(file) {
-  const formData = new FormData()
-  formData.append('image_file', file)
-  formData.append('size', 'auto')
-  const r = await fetch('https://api.remove.bg/v1.0/removebg', {
+  // Use Cloudinary AI background removal — no external API needed
+  const form = new FormData()
+  form.append('file', file)
+  form.append('upload_preset', UPLOAD_PRESET)
+  form.append('folder', 'fcsm-collection')
+  form.append('background_removal', 'cloudinary_ai')
+
+  const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
     method: 'POST',
-    headers: { 'X-Api-Key': REMOVEBG_KEY },
-    body: formData
+    body: form
   })
-  if (!r.ok) throw new Error('remove.bg échoué')
-  const blob = await r.blob()
-  // Return PNG transparent as-is from remove.bg — no resize, no white bg
-  return new File([blob], 'photo_nobg.png', { type: 'image/png' })
+  if (!r.ok) throw new Error('Cloudinary upload failed')
+  const data = await r.json()
+
+  // Return object with Cloudinary URL — skip re-upload in handleFile
+  return { cloudinaryUrl: data.secure_url, isCloudinary: true }
 }
