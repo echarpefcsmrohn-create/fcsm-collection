@@ -1,0 +1,14 @@
+{
+  "name": "FCSM — Ma Collection",
+  "short_name": "FCSM Collection",
+  "description": "Ma collection d'écharpes FC Sochaux-Montbéliard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080C1A",
+  "theme_color": "#001f5c",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
