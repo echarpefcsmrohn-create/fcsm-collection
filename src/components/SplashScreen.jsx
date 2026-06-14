@@ -59,6 +59,9 @@ export default function SplashScreen({ onDone }) {
         </div>
         <div className="text-argent/70 text-xs tracking-wide">{step}</div>
       </div>
+      <div className="text-white/20 text-[0.58rem] tracking-widest">
+        v{__APP_VERSION__}
+      </div>
     </motion.div>
   )
 }

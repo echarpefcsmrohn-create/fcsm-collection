@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
+import AppVersion from '../components/AppVersion'
 import { useCollection } from '../context/CollectionContext'
 import { useTheme } from '../context/ThemeContext'
 import { useAnimatedNumber } from '../hooks/useAnimatedNumber'
@@ -134,6 +135,10 @@ export default function HomePage({ onNavigate }) {
             ))}
           </div>
         )}
+      </div>
+      {/* VERSION */}
+      <div className="pb-2 pt-4">
+        <AppVersion />
       </div>
     </div>
   )
