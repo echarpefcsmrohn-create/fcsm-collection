@@ -1,6 +1,5 @@
 const CLOUD_NAME = 'dxwjoflqn'
 const UPLOAD_PRESET = 'fcsm_unsigned'
-const REMOVEBG_KEY = 'uEBwdspEM8HYZhCcDPe63Yef'
 
 export function compressImage(dataUrl, maxW = 800) {
   return new Promise(resolve => {
@@ -31,20 +30,25 @@ export async function uploadToCloudinary(file) {
 }
 
 export async function removeBackground(file) {
-  // Use Cloudinary AI background removal — no external API needed
+  // Upload first, then apply bg removal via Cloudinary transformation URL
   const form = new FormData()
   form.append('file', file)
   form.append('upload_preset', UPLOAD_PRESET)
   form.append('folder', 'fcsm-collection')
-  form.append('background_removal', 'cloudinary_ai')
 
   const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-    method: 'POST',
-    body: form
+    method: 'POST', body: form
   })
-  if (!r.ok) throw new Error('Cloudinary upload failed')
+  if (!r.ok) throw new Error('Upload failed')
   const data = await r.json()
 
-  // Return object with Cloudinary URL — skip re-upload in handleFile
-  return { cloudinaryUrl: data.secure_url, isCloudinary: true }
+  // Apply background removal via URL transformation
+  // e_background_removal uses Pixelz addon
+  const publicId = data.public_id
+  const bgRemovedUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/e_background_removal/${publicId}.png`
+
+  // Wait a moment for processing
+  await new Promise(r => setTimeout(r, 3000))
+
+  return { cloudinaryUrl: bgRemovedUrl, isCloudinary: true }
 }
