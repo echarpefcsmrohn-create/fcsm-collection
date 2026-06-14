@@ -71,14 +71,9 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
       const blob = await r.blob()
       const file = new File([blob], 'photo.jpg', { type:'image/jpeg' })
       setReprocessStep('🪄 Détourage...')
-      const result = await removeBackground(file)
-      let url
-      if (result.isCloudinary) {
-        url = result.cloudinaryUrl
-      } else {
-        setReprocessStep('📤 Upload...')
-        url = await uploadToCloudinary(result)
-      }
+      const nobg = await removeBackground(file)
+      setReprocessStep('📤 Upload...')
+      const url = await uploadToCloudinary(nobg)
       await update(scarf.id, { photo_url: url })
       setReprocessStep('✅ Terminé !')
       setTimeout(() => setReprocessStep(''), 2000)

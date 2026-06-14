@@ -78,22 +78,20 @@ export default function AddModal({ open, onClose }) {
     setProcessing(true)
     setStep('🪄 Détourage en cours...')
     try {
-      const result = await removeBackground(file)
-      if (result.isCloudinary) {
-        // Already uploaded to Cloudinary with bg removed
-        setProcessedFile({ cloudinaryUrl: result.cloudinaryUrl })
-        setPreview(result.cloudinaryUrl)
-        setStep('✅ Fond supprimé !')
-        // Use original file for AI analysis
-        const reader = new FileReader()
-        reader.onload = e => {
-          checkDoublon(file, e.target.result)
-          suggestEraAndName(e.target.result)
-        }
-        reader.readAsDataURL(file)
+      const nobg = await removeBackground(file)
+      setProcessedFile(nobg)
+      setPreview(URL.createObjectURL(nobg))
+      setStep('✅ Fond supprimé !')
+      const reader = new FileReader()
+      reader.onload = e => {
+        checkDoublon(nobg, e.target.result)
+        suggestEraAndName(e.target.result)
       }
-    } catch {
+      reader.readAsDataURL(nobg)
+    } catch(e) {
+      console.error('BG removal failed:', e)
       setProcessedFile(file)
+      setPreview(URL.createObjectURL(file))
       setStep('⚠️ Photo originale utilisée')
       const reader = new FileReader()
       reader.onload = e => {
@@ -140,13 +138,8 @@ export default function AddModal({ open, onClose }) {
     try {
       let photo_url = null
       if (processedFile) {
-        if (processedFile.cloudinaryUrl) {
-          // Already on Cloudinary (bg removal done)
-          photo_url = processedFile.cloudinaryUrl
-        } else {
-          setStep('📤 Upload en cours...')
-          photo_url = await uploadToCloudinary(processedFile)
-        }
+        setStep('📤 Upload en cours...')
+        photo_url = await uploadToCloudinary(processedFile)
       }
       await add({
         Name: name.trim(),

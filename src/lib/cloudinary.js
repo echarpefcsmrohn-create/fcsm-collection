@@ -29,26 +29,17 @@ export async function uploadToCloudinary(file) {
   return data.secure_url
 }
 
+// Détourage via proxy Cloudflare -> erase.bg API gratuite
 export async function removeBackground(file) {
-  // Upload first, then apply bg removal via Cloudinary transformation URL
   const form = new FormData()
-  form.append('file', file)
-  form.append('upload_preset', UPLOAD_PRESET)
-  form.append('folder', 'fcsm-collection')
-
-  const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-    method: 'POST', body: form
+  form.append('image_file', file)
+  
+  const r = await fetch('https://fcsm-ai-proxy.echarpe-fcsm-rohn.workers.dev/removebg', {
+    method: 'POST',
+    body: form
   })
-  if (!r.ok) throw new Error('Upload failed')
-  const data = await r.json()
-
-  // Apply background removal via URL transformation
-  // e_background_removal uses Pixelz addon
-  const publicId = data.public_id
-  const bgRemovedUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/e_background_removal/${publicId}.png`
-
-  // Wait a moment for processing
-  await new Promise(r => setTimeout(r, 3000))
-
-  return { cloudinaryUrl: bgRemovedUrl, isCloudinary: true }
+  
+  if (!r.ok) throw new Error('Détourage échoué')
+  const blob = await r.blob()
+  return new File([blob], 'photo_nobg.png', { type: 'image/png' })
 }
