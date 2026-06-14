@@ -77,29 +77,15 @@ export default function AddModal({ open, onClose }) {
     setDoublonAlert(null)
     setProcessing(true)
     setStep('🪄 Détourage en cours...')
-    try {
-      const nobg = await removeBackground(file)
-      setProcessedFile(nobg)
-      setPreview(URL.createObjectURL(nobg))
-      setStep('✅ Fond supprimé !')
-      const reader = new FileReader()
-      reader.onload = e => {
-        checkDoublon(nobg, e.target.result)
-        suggestEraAndName(e.target.result)
-      }
-      reader.readAsDataURL(nobg)
-    } catch(e) {
-      console.error('BG removal failed:', e)
-      setProcessedFile(file)
-      setPreview(URL.createObjectURL(file))
-      setStep('⚠️ Photo originale utilisée')
-      const reader = new FileReader()
-      reader.onload = e => {
-        checkDoublon(file, e.target.result)
-        suggestEraAndName(e.target.result)
-      }
-      reader.readAsDataURL(file)
+    setProcessedFile(file)
+    setPreview(URL.createObjectURL(file))
+    setStep('✅ Photo ajoutée !')
+    const reader = new FileReader()
+    reader.onload = e => {
+      checkDoublon(file, e.target.result)
+      suggestEraAndName(e.target.result)
     }
+    reader.readAsDataURL(file)
     setTimeout(() => setProcessing(false), 1000)
   }
 

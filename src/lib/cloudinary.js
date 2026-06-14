@@ -29,17 +29,7 @@ export async function uploadToCloudinary(file) {
   return data.secure_url
 }
 
-// Détourage via proxy Cloudflare -> erase.bg API gratuite
+// Détourage désactivé temporairement - remove.bg se recharge le 1er juillet 2026
 export async function removeBackground(file) {
-  const form = new FormData()
-  form.append('image_file', file)
-  
-  const r = await fetch('https://fcsm-ai-proxy.echarpe-fcsm-rohn.workers.dev/removebg', {
-    method: 'POST',
-    body: form
-  })
-  
-  if (!r.ok) throw new Error('Détourage échoué')
-  const blob = await r.blob()
-  return new File([blob], 'photo_nobg.png', { type: 'image/png' })
+  throw new Error('Détourage indisponible')
 }
