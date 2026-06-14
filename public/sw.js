@@ -1,56 +1,44 @@
-const CACHE = 'fcsm-v2'
-const STATIC = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/apple-touch-icon.png'
-]
+// Service Worker simplifié - évite les bugs de cache
+const CACHE = 'fcsm-v3'
 
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(STATIC))
-  )
   self.skipWaiting()
 })
 
 self.addEventListener('activate', e => {
+  // Supprime tous les anciens caches
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      Promise.all(keys.map(k => caches.delete(k)))
     )
   )
   self.clients.claim()
 })
 
 self.addEventListener('fetch', e => {
+  // Ne met en cache que les assets statiques (JS, CSS, images)
   const url = new URL(e.request.url)
+  
+  // Ignore toutes les APIs externes
+  if (url.hostname !== location.hostname) return
 
-  // Ne pas intercepter les appels API externes
-  if (
-    url.hostname.includes('supabase') ||
-    url.hostname.includes('cloudinary') ||
-    url.hostname.includes('anthropic') ||
-    url.hostname.includes('remove.bg') ||
-    url.hostname.includes('workers.dev') ||
-    url.hostname.includes('fonts.googleapis') ||
-    url.hostname.includes('fonts.gstatic')
-  ) return
-
+  // Ignore les requêtes non-GET
   if (e.request.method !== 'GET') return
 
-  // App shell : cache first, network fallback
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached
-      return fetch(e.request).then(res => {
-        if (res.ok) {
+    fetch(e.request)
+      .then(res => {
+        // Met en cache seulement si succès
+        if (res.ok && (url.pathname.includes('/assets/') || url.pathname === '/')) {
           const clone = res.clone()
           caches.open(CACHE).then(c => c.put(e.request, clone))
         }
         return res
-      }).catch(() => caches.match('/index.html'))
-    })
+      })
+      .catch(() => {
+        // Fallback cache si hors ligne
+        return caches.match(e.request)
+          .then(cached => cached || caches.match('/'))
+      })
   )
 })
