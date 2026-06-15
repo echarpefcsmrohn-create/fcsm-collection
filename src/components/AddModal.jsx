@@ -50,13 +50,19 @@ export default function AddModal({ open, onClose }) {
 
     let finalFile = croppedFile
     try {
-      const nobg = await removeBackground(croppedFile)
+      setStep('🪄 Détourage en cours (clé 1/3)...')
+      const nobg = await removeBackground(croppedFile, (msg) => setStep(msg))
       finalFile = nobg
       setPreview(URL.createObjectURL(nobg))
       setStep('✅ Fond supprimé !')
     } catch(e) {
-      console.error('BG removal failed:', e)
-      setStep('⚠️ Photo recadrée sans détourage')
+      const msg = e.message || ''
+      if (msg.includes('épuisés')) {
+        setStep('❌ Crédits remove.bg épuisés (3/3)')
+      } else {
+        setStep('❌ Erreur détourage: ' + msg.slice(0, 60))
+      }
+      setTimeout(() => setStep('⚠️ Photo sans détourage utilisée'), 2500)
     }
 
     setProcessedFile(finalFile)
@@ -130,7 +136,7 @@ export default function AddModal({ open, onClose }) {
           system: 'Tu reponds UNIQUEMENT en JSON valide.',
           messages: [{ role:'user', content: [
             { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:base64 } },
-            { type:'text', text:`Analyse cette écharpe FCSM. Réponds en JSON: {"name":"nom court descriptif ex: Finale CdF 2007 vs PSG","era":"une de ces valeurs: 1930-1940|1940-1980|1990-1994|1994-1997|1997-2000|2000-2004|2004-2010|2010-2015|2015-auj ou null si incertain"}` }
+            { type:'text', text:`Tu es un expert en écharpes de football du FCSM (Football Club Sochaux-Montbéliard, couleurs rouge et jaune). Analyse UNIQUEMENT ce qui est VISIBLE et LISIBLE sur cette écharpe. Ne devine jamais un match ou événement qui n'est pas clairement écrit dessus.\n\nRègles strictes:\n- "name": décris ce que tu vois réellement (texte écrit, logo, couleurs). Ex: "Écharpe rayée rouge blanc FCSM", "Écharpe 100 ans FCSM", "Écharpe rouge et jaune supporter". Si un texte précis est visible, utilise-le. JAMAIS inventer une finale ou un match si ce n'est pas écrit dessus.\n- "era": déduis du style graphique, typographie et couleurs visibles. Valeurs: 1930-1940|1940-1980|1990-1994|1994-1997|1997-2000|2000-2004|2004-2010|2010-2015|2015-auj|null\n\nRéponds UNIQUEMENT en JSON: {"name":"...","era":"..."}` }
           ]}]
         })
       })
