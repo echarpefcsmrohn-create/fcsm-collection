@@ -6,43 +6,58 @@ export default function PhotoViewer({ src, onClose }) {
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const lastTap = useRef(0)
   const lastDistance = useRef(null)
+  const lastMidpoint = useRef(null)
   const lastPosition = useRef(null)
   const isDragging = useRef(false)
+  const scaleRef = useRef(1)
+  const positionRef = useRef({ x: 0, y: 0 })
+  const containerRef = useRef()
 
   const resetView = () => {
+    scaleRef.current = 1
+    positionRef.current = { x: 0, y: 0 }
     setScale(1)
     setPosition({ x: 0, y: 0 })
   }
 
-  // Double tap to zoom
+  // Double tap to zoom at tap point
   const handleTap = useCallback((e) => {
     const now = Date.now()
-    const DOUBLE_TAP_DELAY = 300
-    if (now - lastTap.current < DOUBLE_TAP_DELAY) {
-      // Double tap
-      if (scale > 1) {
+    if (now - lastTap.current < 300) {
+      if (scaleRef.current > 1) {
         resetView()
       } else {
-        const rect = e.currentTarget.getBoundingClientRect()
-        const x = e.changedTouches ? e.changedTouches[0].clientX : e.clientX
-        const y = e.changedTouches ? e.changedTouches[0].clientY : e.clientY
-        const offsetX = (x - rect.left - rect.width / 2) * -1.5
-        const offsetY = (y - rect.top - rect.height / 2) * -1.5
-        setScale(3)
-        setPosition({ x: offsetX, y: offsetY })
+        const rect = containerRef.current.getBoundingClientRect()
+        const touch = e.changedTouches ? e.changedTouches[0] : e
+        // Point de tap relatif au centre du conteneur
+        const tapX = touch.clientX - rect.left - rect.width / 2
+        const tapY = touch.clientY - rect.top - rect.height / 2
+        const newScale = 3
+        // On déplace pour centrer sur le point tappé
+        const newX = -tapX * (newScale - 1)
+        const newY = -tapY * (newScale - 1)
+        scaleRef.current = newScale
+        positionRef.current = { x: newX, y: newY }
+        setScale(newScale)
+        setPosition({ x: newX, y: newY })
       }
       lastTap.current = 0
     } else {
       lastTap.current = now
     }
-  }, [scale])
+  }, [])
 
-  // Pinch to zoom
   const handleTouchStart = (e) => {
     if (e.touches.length === 2) {
       const dx = e.touches[0].clientX - e.touches[1].clientX
       const dy = e.touches[0].clientY - e.touches[1].clientY
       lastDistance.current = Math.sqrt(dx * dx + dy * dy)
+      // Midpoint entre les deux doigts
+      lastMidpoint.current = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+      }
+      isDragging.current = false
     } else if (e.touches.length === 1) {
       lastPosition.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
       isDragging.current = true
@@ -55,32 +70,65 @@ export default function PhotoViewer({ src, onClose }) {
       const dx = e.touches[0].clientX - e.touches[1].clientX
       const dy = e.touches[0].clientY - e.touches[1].clientY
       const distance = Math.sqrt(dx * dx + dy * dy)
-      const delta = distance / lastDistance.current
-      setScale(s => Math.min(Math.max(s * delta, 1), 5))
+      const ratio = distance / lastDistance.current
+
+      // Nouveau midpoint
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2
+      const rect = containerRef.current.getBoundingClientRect()
+
+      // Point de zoom relatif au centre du conteneur
+      const originX = midX - rect.left - rect.width / 2
+      const originY = midY - rect.top - rect.height / 2
+
+      const oldScale = scaleRef.current
+      const newScale = Math.min(Math.max(oldScale * ratio, 1), 5)
+
+      // Ajuster la position pour zoomer au point des doigts
+      const scaleChange = newScale - oldScale
+      const newX = positionRef.current.x - originX * scaleChange
+      const newY = positionRef.current.y - originY * scaleChange
+
+      scaleRef.current = newScale
+      positionRef.current = { x: newX, y: newY }
+      setScale(newScale)
+      setPosition({ x: newX, y: newY })
+
       lastDistance.current = distance
-    } else if (e.touches.length === 1 && isDragging.current && scale > 1) {
+      lastMidpoint.current = { x: midX, y: midY }
+    } else if (e.touches.length === 1 && isDragging.current && scaleRef.current > 1) {
       const dx = e.touches[0].clientX - lastPosition.current.x
       const dy = e.touches[0].clientY - lastPosition.current.y
-      setPosition(p => ({ x: p.x + dx, y: p.y + dy }))
+      const newPos = {
+        x: positionRef.current.x + dx,
+        y: positionRef.current.y + dy,
+      }
+      positionRef.current = newPos
+      setPosition(newPos)
       lastPosition.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
     }
   }
 
   const handleTouchEnd = (e) => {
-    lastDistance.current = null
-    isDragging.current = false
-    // If zoomed out below 1, reset
-    if (scale < 1.1) resetView()
+    if (e.touches.length < 2) {
+      lastDistance.current = null
+      lastMidpoint.current = null
+    }
+    if (e.touches.length === 0) {
+      isDragging.current = false
+      if (scaleRef.current < 1.1) resetView()
+    }
   }
 
   return (
     <AnimatePresence>
       <motion.div
+        ref={containerRef}
         className="fixed inset-0 z-[500] flex items-center justify-center"
         style={{ background: 'rgba(0,0,0,0.97)', touchAction: 'none' }}
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         onTouchEnd={handleTap}
-        onClick={e => { if (e.target === e.currentTarget && scale === 1) onClose() }}>
+        onClick={e => { if (e.target === e.currentTarget && scaleRef.current === 1) onClose() }}>
 
         {/* Close button */}
         <button
@@ -114,8 +162,9 @@ export default function PhotoViewer({ src, onClose }) {
             alt=""
             className="max-w-full max-h-full object-contain select-none"
             style={{
-              transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
-              transition: isDragging.current ? 'none' : 'transform 0.2s ease',
+              transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+              transformOrigin: 'center center',
+              transition: isDragging.current ? 'none' : 'transform 0.15s ease',
               cursor: scale > 1 ? 'grab' : 'zoom-in',
               userSelect: 'none',
               WebkitUserSelect: 'none',

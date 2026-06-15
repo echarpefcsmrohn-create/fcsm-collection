@@ -20,8 +20,26 @@ function nextKey() {
   return REMOVEBG_KEYS[next]
 }
 
+
 function getCurrentKey() {
   return REMOVEBG_KEYS[getCurrentKeyIndex()]
+}
+
+export async function getRemoveBgCredits() {
+  // Vérifie les crédits de toutes les clés en parallèle
+  const results = await Promise.all(REMOVEBG_KEYS.map(async (key, i) => {
+    try {
+      const r = await fetch('https://api.remove.bg/v1.0/account', {
+        headers: { 'X-Api-Key': key }
+      })
+      if (!r.ok) return { key: i + 1, credits: 0, error: r.status }
+      const data = await r.json()
+      return { key: i + 1, credits: data.data?.attributes?.api?.free_calls ?? 0, total: 50 }
+    } catch(e) {
+      return { key: i + 1, credits: 0, error: 'network' }
+    }
+  }))
+  return results
 }
 
 export function compressImage(dataUrl, maxW = 800) {

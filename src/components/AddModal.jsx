@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
 import { ERAS } from '../lib/eras'
-import { uploadToCloudinary, removeBackground, compressImage } from '../lib/cloudinary'
+import { uploadToCloudinary, removeBackground, compressImage, getRemoveBgCredits } from '../lib/cloudinary'
 import { playAdd, vibrate } from '../lib/sounds'
 import confetti from 'canvas-confetti'
 
@@ -27,6 +27,8 @@ export default function AddModal({ open, onClose }) {
   const [saving, setSaving] = useState(false)
   const [doublonAlert, setDoublonAlert] = useState(null)
   const [checkingDoublon, setCheckingDoublon] = useState(false)
+  const [credits, setCredits] = useState(null)
+  const [loadingCredits, setLoadingCredits] = useState(false)
   const fileRef = useRef()
   const cameraRef = useRef()
 
@@ -35,6 +37,16 @@ export default function AddModal({ open, onClose }) {
     setPreview(null); setProcessedFile(null)
     setStep(''); setProcessing(false); setSaving(false)
     setDoublonAlert(null); setCheckingDoublon(false)
+    setCredits(null)
+  }
+
+  const fetchCredits = async () => {
+    setLoadingCredits(true)
+    try {
+      const results = await getRemoveBgCredits()
+      setCredits(results)
+    } catch(e) {}
+    setLoadingCredits(false)
   }
 
   const handleClose = () => { reset(); onClose() }
@@ -209,6 +221,48 @@ export default function AddModal({ open, onClose }) {
                   onChange={e => { handleFile(e.target.files[0]); e.target.value='' }} />
                 <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
                   onChange={e => { handleFile(e.target.files[0]); e.target.value='' }} />
+
+                {/* Crédits remove.bg */}
+                <div className="mt-2">
+                  {!credits && (
+                    <button onClick={fetchCredits} disabled={loadingCredits}
+                      className="w-full py-2 rounded-xl border border-bord bg-surface2 text-muted text-xs flex items-center justify-center gap-2 cursor-pointer active:border-jaune transition-colors disabled:opacity-50">
+                      {loadingCredits
+                        ? <><div className="w-3 h-3 border border-bord border-t-jaune rounded-full animate-spin-slow" /> Chargement crédits...</>
+                        : <>🔑 Voir crédits remove.bg</>}
+                    </button>
+                  )}
+                  {credits && (
+                    <div className="bg-surface2 border border-bord rounded-xl px-3 py-2">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-muted text-xs uppercase tracking-widest">Crédits remove.bg</span>
+                        <button onClick={fetchCredits} disabled={loadingCredits} className="text-jaune text-xs cursor-pointer">
+                          {loadingCredits ? '...' : '↻'}
+                        </button>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {credits.map(c => (
+                          <div key={c.key} className="flex items-center gap-2">
+                            <span className="text-muted text-xs w-10">Clé {c.key}</span>
+                            <div className="flex-1 h-1.5 bg-bord rounded-full overflow-hidden">
+                              <div className="h-full rounded-full transition-all"
+                                style={{
+                                  width: `${Math.min((c.credits / 50) * 100, 100)}%`,
+                                  background: c.credits > 20 ? '#F5C400' : c.credits > 5 ? '#f97316' : '#ef4444'
+                                }} />
+                            </div>
+                            <span className={`text-xs font-semibold w-8 text-right ${c.credits > 20 ? 'text-jaune' : c.credits > 5 ? 'text-orange-400' : 'text-red-400'}`}>
+                              {c.error ? '❌' : c.credits}
+                            </span>
+                          </div>
+                        ))}
+                        <div className="text-muted text-[0.6rem] text-right mt-0.5">
+                          Total: {credits.reduce((a,c) => a + (c.credits||0), 0)} / {credits.length * 50} crédits
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Doublon check */}
                 {checkingDoublon && (
