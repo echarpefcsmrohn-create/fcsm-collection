@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
 import { ERAS } from '../lib/eras'
 import { uploadToCloudinary, removeBackground, compressImage } from '../lib/cloudinary'
+import ImageCropper from './ImageCropper'
 import { playAdd, vibrate } from '../lib/sounds'
 import confetti from 'canvas-confetti'
 
@@ -27,6 +28,8 @@ export default function AddModal({ open, onClose }) {
   const [saving, setSaving] = useState(false)
   const [doublonAlert, setDoublonAlert] = useState(null)
   const [checkingDoublon, setCheckingDoublon] = useState(false)
+  const [showCropper, setShowCropper] = useState(false)
+  const [cropSrc, setCropSrc] = useState(null)
   const fileRef = useRef()
   const cameraRef = useRef()
 
@@ -35,6 +38,36 @@ export default function AddModal({ open, onClose }) {
     setPreview(null); setProcessedFile(null)
     setStep(''); setProcessing(false); setSaving(false)
     setDoublonAlert(null); setCheckingDoublon(false)
+    setShowCropper(false); setCropSrc(null)
+  }
+
+  const handleCropDone = async (croppedFile) => {
+    setShowCropper(false)
+    setCropSrc(null)
+    setPreview(URL.createObjectURL(croppedFile))
+    setProcessing(true)
+    setStep('🪄 Détourage en cours...')
+
+    let finalFile = croppedFile
+    try {
+      const nobg = await removeBackground(croppedFile)
+      finalFile = nobg
+      setPreview(URL.createObjectURL(nobg))
+      setStep('✅ Fond supprimé !')
+    } catch(e) {
+      console.error('BG removal failed:', e)
+      setStep('⚠️ Photo recadrée sans détourage')
+    }
+
+    setProcessedFile(finalFile)
+    setTimeout(() => setProcessing(false), 800)
+
+    const reader = new FileReader()
+    reader.onload = e => {
+      checkDoublon(finalFile, e.target.result)
+      suggestEraAndName(e.target.result)
+    }
+    reader.readAsDataURL(finalFile)
   }
 
   const checkDoublon = async (file, dataUrl) => {
@@ -77,15 +110,10 @@ export default function AddModal({ open, onClose }) {
     setDoublonAlert(null)
     setProcessing(true)
     setStep('🪄 Détourage en cours...')
-    setProcessedFile(file)
-    setPreview(URL.createObjectURL(file))
-    setStep('✅ Photo ajoutée !')
-    const reader = new FileReader()
-    reader.onload = e => {
-      checkDoublon(file, e.target.result)
-      suggestEraAndName(e.target.result)
-    }
-    reader.readAsDataURL(file)
+    // Show cropper first
+    const url = URL.createObjectURL(file)
+    setCropSrc(url)
+    setShowCropper(true)
     setTimeout(() => setProcessing(false), 1000)
   }
 
@@ -146,6 +174,7 @@ export default function AddModal({ open, onClose }) {
   }
 
   return (
+    <>
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-[200] flex items-end justify-center"
@@ -274,5 +303,15 @@ export default function AddModal({ open, onClose }) {
         </div>
       )}
     </AnimatePresence>
+
+    {/* Image Cropper */}
+    {showCropper && cropSrc && (
+      <ImageCropper
+        imageSrc={cropSrc}
+        onCrop={handleCropDone}
+        onCancel={() => { setShowCropper(false); setCropSrc(null) }}
+      />
+    )}
+    </>
   )
 }

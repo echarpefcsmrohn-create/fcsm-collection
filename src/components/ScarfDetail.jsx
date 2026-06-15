@@ -4,6 +4,7 @@ import { useCollection } from '../context/CollectionContext'
 import { getEraLabel, getScarfNumber, ERAS } from '../lib/eras'
 import { uploadToCloudinary, removeBackground } from '../lib/cloudinary'
 import { playDelete, vibrate } from '../lib/sounds'
+import PhotoViewer from './PhotoViewer'
 
 export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
   const { collection, update, remove } = useCollection()
@@ -229,17 +230,10 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
           )}
         </motion.div>
 
-        {/* Lightbox */}
-        <AnimatePresence>
-          {lightbox && (
-            <motion.div className="fixed inset-0 bg-black/95 z-[400] flex items-center justify-center p-4"
-              onClick={() => setLightbox(false)}
-              initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}>
-              <img src={currentPhoto} alt="" className="max-w-full max-h-full object-contain rounded-xl" />
-              <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center cursor-pointer text-lg">✕</button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Photo Viewer with zoom */}
+        {lightbox && currentPhoto && (
+          <PhotoViewer src={currentPhoto} onClose={() => setLightbox(false)} />
+        )}
       </motion.div>
     </AnimatePresence>
   )

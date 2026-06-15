@@ -13,7 +13,9 @@
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^11.0.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-easy-crop": "^6.0.2",
+    "react-image-crop": "^11.0.10"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.0",
