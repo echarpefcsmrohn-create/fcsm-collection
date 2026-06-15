@@ -53,13 +53,12 @@ export async function uploadToCloudinary(file) {
 }
 
 export async function removeBackground(file, onStatus) {
-  const notify = (msg) => { console.log('[removebg]', msg); if (onStatus) onStatus(msg) }
-  notify(`Détourage fichier: ${file.name} (${Math.round(file.size/1024)}KB)`)
+  const notify = (msg) => { if (onStatus) onStatus(msg) }
 
   for (let attempt = 0; attempt < REMOVEBG_KEYS.length; attempt++) {
     const keyIndex = getCurrentKeyIndex()
     const key = getCurrentKey()
-    notify(`🪄 Tentative ${attempt+1}/${REMOVEBG_KEYS.length} (clé ${keyIndex+1})...`)
+    notify(`🪄 Détourage en cours (${attempt+1}/${REMOVEBG_KEYS.length})...`)
 
     const formData = new FormData()
     formData.append('image_file', file)
@@ -73,20 +72,19 @@ export async function removeBackground(file, onStatus) {
 
     if (r.ok) {
       const blob = await r.blob()
-      notify(`✅ Succès clé ${keyIndex+1}`)
       return new File([blob], 'photo_nobg.png', { type: 'image/png' })
     }
 
     let errorBody = ''
     try { errorBody = await r.text() } catch(e) {}
-    notify(`❌ Clé ${keyIndex+1} — erreur ${r.status}: ${errorBody.slice(0,80)}`)
 
     if (r.status === 402 || r.status === 403) {
+      notify(`⚠️ Clé ${keyIndex+1} épuisée, passage à la suivante...`)
       nextKey()
       continue
     }
 
-    throw new Error(`remove.bg erreur ${r.status}: ${errorBody.slice(0,80)}`)
+    throw new Error(`Erreur ${r.status}`)
   }
 
   throw new Error('Tous les crédits remove.bg sont épuisés')
