@@ -10,166 +10,130 @@ function loadHistory() {
   try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]') } catch { return [] }
 }
 function saveHistory(h) {
-  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)) } catch {} 
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)) } catch {}
 }
 
-function FortuneWheel({ collection, spinning, onSpinEnd, targetIndex }) {
+const COLORS = [
+  '#0a1830', '#1a2d5a', '#0f1e3d', '#152244',
+  '#1c2f5c', '#091528', '#112040', '#0d1b38'
+]
+
+function FortuneWheel({ collection, spinning, targetIndex, onSpinEnd }) {
   const canvasRef = useRef(null)
   const angleRef = useRef(0)
   const rafRef = useRef(null)
-  const velocityRef = useRef(0)
   const n = collection.length
-
-  const COLORS = ['#1a2d5a', '#0f1e3d', '#152244', '#0a1830']
-  const ACCENT = '#F5C400'
 
   const draw = useCallback((angle) => {
     const canvas = canvasRef.current
     if (!canvas || n === 0) return
     const ctx = canvas.getContext('2d')
-    const W = canvas.width
-    const H = canvas.height
-    ctx.clearRect(0, 0, W, H)
-
-    // Perspective : ellipse
-    const cx = W / 2
-    const cy = H * 0.52
-    const rx = W * 0.44
-    const ry = H * 0.18  // aplatissement perspective
-
+    const S = canvas.width
+    const cx = S / 2, cy = S / 2
+    const R = S / 2 - 4
     const sliceAngle = (2 * Math.PI) / n
 
-    // Dessiner les segments
-    for (let i = 0; i < n; i++) {
-      const startA = angle + i * sliceAngle - Math.PI / 2
-      const endA = startA + sliceAngle
+    ctx.clearRect(0, 0, S, S)
 
-      ctx.save()
+    for (let i = 0; i < n; i++) {
+      const startA = angle + i * sliceAngle
+      const endA = startA + sliceAngle
+      const midA = startA + sliceAngle / 2
+
+      // Segment
       ctx.beginPath()
       ctx.moveTo(cx, cy)
-
-      // Arc elliptique = points sur ellipse
-      const steps = 20
-      for (let s = 0; s <= steps; s++) {
-        const a = startA + (endA - startA) * (s / steps)
-        ctx.lineTo(cx + rx * Math.cos(a), cy + ry * Math.sin(a))
-      }
+      ctx.arc(cx, cy, R, startA, endA)
       ctx.closePath()
-
-      const midA = startA + sliceAngle / 2
-      const sinMid = Math.sin(midA)
-      // Assombrir les segments en bas (verso de la roue)
-      const brightness = sinMid > 0 ? 0.5 + sinMid * 0.5 : 0.3
       ctx.fillStyle = COLORS[i % COLORS.length]
-      ctx.globalAlpha = brightness
       ctx.fill()
-      ctx.globalAlpha = 1
-
-      // Bordure
-      ctx.strokeStyle = 'rgba(245,196,0,0.3)'
-      ctx.lineWidth = 0.8
+      ctx.strokeStyle = 'rgba(245,196,0,0.4)'
+      ctx.lineWidth = 1
       ctx.stroke()
 
-      // Texte numéro — seulement si segment visible (haut de la roue)
-      if (sinMid < 0.6) {
-        const scarf = collection[i]
-        const num = String(i + 1).padStart(3, '0')
-        const textR = rx * 0.72
-        const textX = cx + textR * Math.cos(midA)
-        const textY = cy + ry * 0.72 * Math.sin(midA)
+      // Numéro
+      const num = String(i + 1).padStart(3, '0')
+      const textR = R * 0.68
+      const tx = cx + textR * Math.cos(midA)
+      const ty = cy + textR * Math.sin(midA)
 
-        ctx.save()
-        ctx.translate(textX, textY)
-        // Rotation du texte pour suivre la roue
-        const textAngle = midA + Math.PI / 2
-        ctx.rotate(textAngle)
-        // Compression perspective
-        ctx.scale(1, ry / rx * 0.9)
-
-        const alpha = Math.max(0, Math.min(1, 1 - sinMid * 2))
-        ctx.globalAlpha = alpha
-        ctx.fillStyle = ACCENT
-        ctx.font = `bold ${Math.max(8, Math.min(13, 260 / n))}px 'Bebas Neue', sans-serif`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText(`#${num}`, 0, 0)
-        ctx.globalAlpha = 1
-        ctx.restore()
-      }
+      ctx.save()
+      ctx.translate(tx, ty)
+      ctx.rotate(midA + Math.PI / 2)
+      ctx.fillStyle = '#F5C400'
+      ctx.font = `bold ${Math.max(7, Math.min(14, 280 / n))}px sans-serif`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(`#${num}`, 0, 0)
+      ctx.restore()
     }
 
-    // Cercle bord de la roue
+    // Cercle extérieur
     ctx.beginPath()
-    ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI)
-    ctx.strokeStyle = ACCENT
-    ctx.lineWidth = 2.5
-    ctx.shadowColor = ACCENT
-    ctx.shadowBlur = 8
+    ctx.arc(cx, cy, R, 0, 2 * Math.PI)
+    ctx.strokeStyle = '#F5C400'
+    ctx.lineWidth = 3
+    ctx.shadowColor = '#F5C400'
+    ctx.shadowBlur = 10
     ctx.stroke()
     ctx.shadowBlur = 0
 
     // Centre
     ctx.beginPath()
-    ctx.ellipse(cx, cy, rx * 0.08, ry * 0.08, 0, 0, 2 * Math.PI)
-    ctx.fillStyle = ACCENT
+    ctx.arc(cx, cy, 14, 0, 2 * Math.PI)
+    ctx.fillStyle = '#F5C400'
     ctx.fill()
-
-    // Indicateur (flèche du haut)
-    const arrowX = cx
-    const arrowY = cy - ry - 8
     ctx.beginPath()
-    ctx.moveTo(arrowX, arrowY + 18)
-    ctx.lineTo(arrowX - 10, arrowY)
-    ctx.lineTo(arrowX + 10, arrowY)
-    ctx.closePath()
-    ctx.fillStyle = ACCENT
-    ctx.shadowColor = ACCENT
-    ctx.shadowBlur = 10
+    ctx.arc(cx, cy, 8, 0, 2 * Math.PI)
+    ctx.fillStyle = '#001f5c'
     ctx.fill()
-    ctx.shadowBlur = 0
 
-  }, [collection, n])
+  }, [n, collection])
 
-  // Animation de spin
+  // Idle rotation lente
+  useEffect(() => {
+    if (spinning || n === 0) return
+    cancelAnimationFrame(rafRef.current)
+    const animate = () => {
+      angleRef.current += 0.004
+      draw(angleRef.current)
+      rafRef.current = requestAnimationFrame(animate)
+    }
+    rafRef.current = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [spinning, n, draw])
+
+  // Spin
   useEffect(() => {
     if (!spinning || n === 0) return
+    cancelAnimationFrame(rafRef.current)
 
     const sliceAngle = (2 * Math.PI) / n
-    // On veut que l'index targetIndex soit sous la flèche (haut = -PI/2)
-    // angle final = -(targetIndex * sliceAngle + sliceAngle/2) pour centrer le segment
+    // La flèche est à droite (angle 0) — on calcule l'angle final pour que targetIndex soit là
     const targetAngle = -(targetIndex * sliceAngle + sliceAngle / 2)
-    // On ajoute plusieurs tours complets pour l'effet de rotation
-    const fullTurns = (5 + Math.floor(Math.random() * 3)) * 2 * Math.PI
-    const finalAngle = targetAngle - fullTurns
-
+    const fullTurns = (6 + Math.floor(Math.random() * 4)) * 2 * Math.PI
     const startAngle = angleRef.current
-    const totalDelta = finalAngle - startAngle
-    const duration = 6000
-    const start = performance.now()
+    // Normaliser pour que la rotation soit toujours dans le bon sens
+    const endAngle = targetAngle - fullTurns
+    const totalDelta = endAngle - startAngle
 
-    // Sons tick
-    let lastTickIdx = -1
+    const duration = 6500
+    const start = performance.now()
+    let lastSegment = -1
 
     const animate = (now) => {
-      const elapsed = now - start
-      const t = Math.min(elapsed / duration, 1)
-      // Easing : accélération rapide puis freinage progressif
-      const ease = t < 0.1
-        ? t * 10 * 0.3
-        : 0.3 + (1 - Math.pow(1 - (t - 0.1) / 0.9, 3)) * 0.7
-      
+      const t = Math.min((now - start) / duration, 1)
+      // Ease out cubic
+      const ease = 1 - Math.pow(1 - t, 3)
       const currentAngle = startAngle + totalDelta * ease
       angleRef.current = currentAngle
 
-      // Tick son quand on passe un segment
-      const currentIdx = Math.floor((-currentAngle / (2 * Math.PI)) * n) % n
-      if (currentIdx !== lastTickIdx) {
-        const speed = Math.abs(totalDelta * ease / duration)
-        if (t < 0.85) {
-          playTick(400 + Math.random() * 300)
-          vibrate([3])
-        }
-        lastTickIdx = currentIdx
+      // Son tick par segment
+      const seg = Math.floor(((-currentAngle % (2 * Math.PI)) / (2 * Math.PI)) * n + n) % n
+      if (seg !== lastSegment && t < 0.9) {
+        playTick(300 + (1 - t) * 500)
+        vibrate([3])
+        lastSegment = seg
       }
 
       draw(currentAngle)
@@ -177,8 +141,8 @@ function FortuneWheel({ collection, spinning, onSpinEnd, targetIndex }) {
       if (t < 1) {
         rafRef.current = requestAnimationFrame(animate)
       } else {
-        angleRef.current = finalAngle
-        draw(finalAngle)
+        angleRef.current = endAngle
+        draw(endAngle)
         onSpinEnd()
       }
     }
@@ -187,32 +151,29 @@ function FortuneWheel({ collection, spinning, onSpinEnd, targetIndex }) {
     return () => cancelAnimationFrame(rafRef.current)
   }, [spinning, targetIndex, n])
 
-  // Dessin statique idle (rotation lente)
-  useEffect(() => {
-    if (spinning || n === 0) return
-    let angle = angleRef.current
-    const animate = () => {
-      angle += 0.003
-      angleRef.current = angle
-      draw(angle)
-      rafRef.current = requestAnimationFrame(animate)
-    }
-    rafRef.current = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [spinning, n, draw])
-
-  useEffect(() => {
-    draw(angleRef.current)
-  }, [collection])
+  useEffect(() => { draw(angleRef.current) }, [collection, draw])
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={340}
-      height={220}
-      className="w-full"
-      style={{ maxWidth: 380 }}
-    />
+    <div className="relative flex items-center justify-center w-full">
+      {/* Flèche indicateur à droite */}
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex items-center"
+        style={{ right: 'calc(50% - 148px)' }}>
+        <div style={{
+          width: 0, height: 0,
+          borderTop: '12px solid transparent',
+          borderBottom: '12px solid transparent',
+          borderRight: '22px solid #F5C400',
+          filter: 'drop-shadow(0 0 6px #F5C400)'
+        }} />
+      </div>
+      <canvas
+        ref={canvasRef}
+        width={300}
+        height={300}
+        className="rounded-full"
+        style={{ maxWidth: 300 }}
+      />
+    </div>
   )
 }
 
@@ -267,23 +228,19 @@ export default function DailyPage() {
       <PageHeader title="ÉCHARPE DU JOUR" subtitle="Laisse le hasard choisir 🎲" />
       <div className="px-4 pt-4 flex flex-col items-center gap-5">
 
-        {/* Roue */}
-        <div className="w-full flex justify-center">
-          {collection.length > 0
-            ? <FortuneWheel
-                collection={collection}
-                spinning={spinning}
-                targetIndex={targetIndex}
-                onSpinEnd={handleSpinEnd}
-              />
-            : <div className="text-center py-8">
-                <div className="text-5xl opacity-20 mb-3">🧣</div>
-                <div className="font-bebas text-2xl tracking-widest text-muted">Collection vide</div>
-              </div>
-          }
-        </div>
+        {collection.length > 0
+          ? <FortuneWheel
+              collection={collection}
+              spinning={spinning}
+              targetIndex={targetIndex}
+              onSpinEnd={handleSpinEnd}
+            />
+          : <div className="text-center py-8">
+              <div className="text-5xl opacity-20 mb-3">🧣</div>
+              <div className="font-bebas text-2xl tracking-widest text-muted">Collection vide</div>
+            </div>
+        }
 
-        {/* Bouton */}
         <motion.button
           className="w-full max-w-xs py-5 font-bebas text-2xl tracking-[3px] rounded-2xl cursor-pointer disabled:opacity-40"
           style={{
@@ -297,7 +254,6 @@ export default function DailyPage() {
           {spinning ? '⏳ EN COURS...' : winner ? '🎲 RELANCER' : '🎲 TOURNER LA ROUE'}
         </motion.button>
 
-        {/* Gagnant */}
         <AnimatePresence>
           {winner && (
             <motion.div className="w-full rounded-2xl overflow-hidden border-2 border-jaune"
@@ -321,7 +277,6 @@ export default function DailyPage() {
           )}
         </AnimatePresence>
 
-        {/* Historique */}
         {history.length > 0 && (
           <motion.button
             className="w-full py-3 bg-surface border border-bord rounded-2xl font-bebas tracking-widest text-sm text-muted cursor-pointer flex items-center justify-between px-5"
