@@ -27,6 +27,7 @@ export default function DailyPage() {
   const [showHistory, setShowHistory] = useState(false)
   const tickIntervalRef = useRef(null)
   const idleAnimRef = useRef(null)
+  const trackRef = useRef(null)
   const [idleOffset, setIdleOffset] = useState(0)
   const ITEM_W = 156
 
@@ -52,18 +53,18 @@ export default function DailyPage() {
     setSpinning(true)
     setTransitioning(false)
 
-    const winnerIdx = 46 + Math.floor(Math.random() * 4)
+    const WINNER_IDX = 48  // toujours le même index = centre exact
     const picked = collection[Math.floor(Math.random() * collection.length)]
     const generated = Array.from({ length: 60 }, () =>
       collection[Math.floor(Math.random() * collection.length)]
     )
-    generated[winnerIdx] = picked  // l'écharpe gagnante EST à winnerIdx
+    generated[WINNER_IDX] = picked
 
-    const wrapW = 320
-    const newOffset = winnerIdx * ITEM_W - (wrapW / 2) + (ITEM_W / 2)
+    // Calcul précis : centrer WINNER_IDX sous la flèche (left-1/2 du conteneur)
+    const containerW = trackRef.current?.offsetWidth || 390
+    const newOffset = WINNER_IDX * ITEM_W + ITEM_W / 2 - containerW / 2
 
-    setWinnerIdxState(winnerIdx)
-    // Reset items ET offset ensemble, puis on attend un vrai frame avant d'animer
+    setWinnerIdxState(WINNER_IDX)
     setItems(generated)
     setOffset(0)
 
@@ -134,7 +135,7 @@ export default function DailyPage() {
       <div className="px-4 pt-6 flex flex-col items-center gap-5">
 
         {/* Slot track */}
-        <div className="w-full relative overflow-hidden rounded-2xl border border-bord bg-surface" style={{ height: '176px' }}>
+        <div ref={trackRef} className="w-full relative overflow-hidden rounded-2xl border border-bord bg-surface" style={{ height: '176px' }}>
           <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-0.5 z-10 pointer-events-none"
             style={{ background: 'var(--jaune)', boxShadow: '0 0 12px rgba(245,196,0,0.7)' }} />
           <div className="absolute left-1/2 -translate-x-1/2 -top-px z-10 text-jaune text-xs pointer-events-none">▼</div>
