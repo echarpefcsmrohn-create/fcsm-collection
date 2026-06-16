@@ -21,6 +21,7 @@ export default function DailyPage() {
   const [items, setItems] = useState([])
   const [offset, setOffset] = useState(0)
   const [transitioning, setTransitioning] = useState(false)
+  const [winnerIdxState, setWinnerIdxState] = useState(48)
   const [history, setHistory] = useState(loadHistory)
   const [showHistory, setShowHistory] = useState(false)
   const tickIntervalRef = useRef(null)
@@ -50,17 +51,20 @@ export default function DailyPage() {
     setSpinning(true)
     setTransitioning(false)
 
+    const winnerIdx = 46 + Math.floor(Math.random() * 4)
+    const picked = collection[Math.floor(Math.random() * collection.length)]
     const generated = Array.from({ length: 60 }, () =>
       collection[Math.floor(Math.random() * collection.length)]
     )
-    const winnerIdx = 46 + Math.floor(Math.random() * 4)
-    const picked = collection[Math.floor(Math.random() * collection.length)]
-    generated[winnerIdx] = picked
-    setItems(generated)
-    setOffset(0)
+    generated[winnerIdx] = picked  // l'écharpe gagnante EST à winnerIdx
 
     const wrapW = 320
-    const newOffset = winnerIdx * ITEM_W - (wrapW / 2) + (ITEM_W / 2) + (Math.random() * 30 - 15)
+    const newOffset = winnerIdx * ITEM_W - (wrapW / 2) + (ITEM_W / 2)
+
+    setWinnerIdxState(winnerIdx)
+    // D'abord reset l'offset, puis les items, puis animer
+    setOffset(0)
+    setItems(generated)
 
     let tickCount = 0
     let tickDelay = 60
@@ -159,7 +163,7 @@ export default function DailyPage() {
               }}>
               {items.map((s, i) => (
                 <div key={i} className="flex-shrink-0 rounded-xl overflow-hidden border bg-surface2 flex flex-col"
-                  style={{ width:`${ITEM_W}px`, height:'160px', borderColor: transitioning && i === 48 ? 'rgba(245,196,0,0.8)' : 'var(--bord)' }}>
+                  style={{ width:`${ITEM_W}px`, height:'160px', borderColor: transitioning && i === winnerIdxState ? 'rgba(245,196,0,0.8)' : 'var(--bord)' }}>
                   <div className="flex-1 overflow-hidden flex items-center justify-center">
                     {s?.photo_url
                       ? <img src={s.photo_url} alt="" className="w-full h-full object-cover" loading="lazy" />
