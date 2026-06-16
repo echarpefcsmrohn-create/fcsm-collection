@@ -6,112 +6,251 @@ import PageHeader from '../components/PageHeader'
 import { playTick, playWin, vibrate } from '../lib/sounds'
 
 const HISTORY_KEY = 'fcsm_daily_history'
-
 function loadHistory() {
   try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]') } catch { return [] }
 }
 function saveHistory(h) {
-  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)) } catch {}
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)) } catch {} 
+}
+
+function FortuneWheel({ collection, spinning, onSpinEnd, targetIndex }) {
+  const canvasRef = useRef(null)
+  const angleRef = useRef(0)
+  const rafRef = useRef(null)
+  const velocityRef = useRef(0)
+  const n = collection.length
+
+  const COLORS = ['#1a2d5a', '#0f1e3d', '#152244', '#0a1830']
+  const ACCENT = '#F5C400'
+
+  const draw = useCallback((angle) => {
+    const canvas = canvasRef.current
+    if (!canvas || n === 0) return
+    const ctx = canvas.getContext('2d')
+    const W = canvas.width
+    const H = canvas.height
+    ctx.clearRect(0, 0, W, H)
+
+    // Perspective : ellipse
+    const cx = W / 2
+    const cy = H * 0.52
+    const rx = W * 0.44
+    const ry = H * 0.18  // aplatissement perspective
+
+    const sliceAngle = (2 * Math.PI) / n
+
+    // Dessiner les segments
+    for (let i = 0; i < n; i++) {
+      const startA = angle + i * sliceAngle - Math.PI / 2
+      const endA = startA + sliceAngle
+
+      ctx.save()
+      ctx.beginPath()
+      ctx.moveTo(cx, cy)
+
+      // Arc elliptique = points sur ellipse
+      const steps = 20
+      for (let s = 0; s <= steps; s++) {
+        const a = startA + (endA - startA) * (s / steps)
+        ctx.lineTo(cx + rx * Math.cos(a), cy + ry * Math.sin(a))
+      }
+      ctx.closePath()
+
+      const midA = startA + sliceAngle / 2
+      const sinMid = Math.sin(midA)
+      // Assombrir les segments en bas (verso de la roue)
+      const brightness = sinMid > 0 ? 0.5 + sinMid * 0.5 : 0.3
+      ctx.fillStyle = COLORS[i % COLORS.length]
+      ctx.globalAlpha = brightness
+      ctx.fill()
+      ctx.globalAlpha = 1
+
+      // Bordure
+      ctx.strokeStyle = 'rgba(245,196,0,0.3)'
+      ctx.lineWidth = 0.8
+      ctx.stroke()
+
+      // Texte numéro — seulement si segment visible (haut de la roue)
+      if (sinMid < 0.6) {
+        const scarf = collection[i]
+        const num = String(i + 1).padStart(3, '0')
+        const textR = rx * 0.72
+        const textX = cx + textR * Math.cos(midA)
+        const textY = cy + ry * 0.72 * Math.sin(midA)
+
+        ctx.save()
+        ctx.translate(textX, textY)
+        // Rotation du texte pour suivre la roue
+        const textAngle = midA + Math.PI / 2
+        ctx.rotate(textAngle)
+        // Compression perspective
+        ctx.scale(1, ry / rx * 0.9)
+
+        const alpha = Math.max(0, Math.min(1, 1 - sinMid * 2))
+        ctx.globalAlpha = alpha
+        ctx.fillStyle = ACCENT
+        ctx.font = `bold ${Math.max(8, Math.min(13, 260 / n))}px 'Bebas Neue', sans-serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(`#${num}`, 0, 0)
+        ctx.globalAlpha = 1
+        ctx.restore()
+      }
+    }
+
+    // Cercle bord de la roue
+    ctx.beginPath()
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI)
+    ctx.strokeStyle = ACCENT
+    ctx.lineWidth = 2.5
+    ctx.shadowColor = ACCENT
+    ctx.shadowBlur = 8
+    ctx.stroke()
+    ctx.shadowBlur = 0
+
+    // Centre
+    ctx.beginPath()
+    ctx.ellipse(cx, cy, rx * 0.08, ry * 0.08, 0, 0, 2 * Math.PI)
+    ctx.fillStyle = ACCENT
+    ctx.fill()
+
+    // Indicateur (flèche du haut)
+    const arrowX = cx
+    const arrowY = cy - ry - 8
+    ctx.beginPath()
+    ctx.moveTo(arrowX, arrowY + 18)
+    ctx.lineTo(arrowX - 10, arrowY)
+    ctx.lineTo(arrowX + 10, arrowY)
+    ctx.closePath()
+    ctx.fillStyle = ACCENT
+    ctx.shadowColor = ACCENT
+    ctx.shadowBlur = 10
+    ctx.fill()
+    ctx.shadowBlur = 0
+
+  }, [collection, n])
+
+  // Animation de spin
+  useEffect(() => {
+    if (!spinning || n === 0) return
+
+    const sliceAngle = (2 * Math.PI) / n
+    // On veut que l'index targetIndex soit sous la flèche (haut = -PI/2)
+    // angle final = -(targetIndex * sliceAngle + sliceAngle/2) pour centrer le segment
+    const targetAngle = -(targetIndex * sliceAngle + sliceAngle / 2)
+    // On ajoute plusieurs tours complets pour l'effet de rotation
+    const fullTurns = (5 + Math.floor(Math.random() * 3)) * 2 * Math.PI
+    const finalAngle = targetAngle - fullTurns
+
+    const startAngle = angleRef.current
+    const totalDelta = finalAngle - startAngle
+    const duration = 6000
+    const start = performance.now()
+
+    // Sons tick
+    let lastTickIdx = -1
+
+    const animate = (now) => {
+      const elapsed = now - start
+      const t = Math.min(elapsed / duration, 1)
+      // Easing : accélération rapide puis freinage progressif
+      const ease = t < 0.1
+        ? t * 10 * 0.3
+        : 0.3 + (1 - Math.pow(1 - (t - 0.1) / 0.9, 3)) * 0.7
+      
+      const currentAngle = startAngle + totalDelta * ease
+      angleRef.current = currentAngle
+
+      // Tick son quand on passe un segment
+      const currentIdx = Math.floor((-currentAngle / (2 * Math.PI)) * n) % n
+      if (currentIdx !== lastTickIdx) {
+        const speed = Math.abs(totalDelta * ease / duration)
+        if (t < 0.85) {
+          playTick(400 + Math.random() * 300)
+          vibrate([3])
+        }
+        lastTickIdx = currentIdx
+      }
+
+      draw(currentAngle)
+
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(animate)
+      } else {
+        angleRef.current = finalAngle
+        draw(finalAngle)
+        onSpinEnd()
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [spinning, targetIndex, n])
+
+  // Dessin statique idle (rotation lente)
+  useEffect(() => {
+    if (spinning || n === 0) return
+    let angle = angleRef.current
+    const animate = () => {
+      angle += 0.003
+      angleRef.current = angle
+      draw(angle)
+      rafRef.current = requestAnimationFrame(animate)
+    }
+    rafRef.current = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [spinning, n, draw])
+
+  useEffect(() => {
+    draw(angleRef.current)
+  }, [collection])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={340}
+      height={220}
+      className="w-full"
+      style={{ maxWidth: 380 }}
+    />
+  )
 }
 
 export default function DailyPage() {
   const { collection } = useCollection()
   const [spinning, setSpinning] = useState(false)
   const [winner, setWinner] = useState(null)
-  const [items, setItems] = useState([])
-  const [offset, setOffset] = useState(0)
-  const [transitioning, setTransitioning] = useState(false)
-  const [winnerIdxState, setWinnerIdxState] = useState(48)
-  const [animating, setAnimating] = useState(false)
+  const [targetIndex, setTargetIndex] = useState(0)
   const [history, setHistory] = useState(loadHistory)
   const [showHistory, setShowHistory] = useState(false)
-  const tickIntervalRef = useRef(null)
-  const idleAnimRef = useRef(null)
-  const trackRef = useRef(null)
-  const [idleOffset, setIdleOffset] = useState(0)
-  const ITEM_W = 156
-
-  // Idle slow scroll before spin
-  useEffect(() => {
-    if (spinning || !collection.length) return
-    let pos = 0
-    const scroll = () => {
-      pos += 0.4
-      const maxPos = collection.length * ITEM_W
-      if (pos >= maxPos) pos = 0
-      setIdleOffset(pos)
-      idleAnimRef.current = requestAnimationFrame(scroll)
-    }
-    idleAnimRef.current = requestAnimationFrame(scroll)
-    return () => cancelAnimationFrame(idleAnimRef.current)
-  }, [spinning, collection.length])
 
   const spin = useCallback(() => {
     if (spinning || !collection.length) return
-    cancelAnimationFrame(idleAnimRef.current)
     setWinner(null)
     setSpinning(true)
-    setTransitioning(false)
-
-    const WINNER_IDX = 48  // toujours le même index = centre exact
-    const picked = collection[Math.floor(Math.random() * collection.length)]
-    const generated = Array.from({ length: 60 }, () =>
-      collection[Math.floor(Math.random() * collection.length)]
-    )
-    generated[WINNER_IDX] = picked
-
-    // Calcul précis : centrer WINNER_IDX sous la flèche (left-1/2 du conteneur)
-    const containerW = trackRef.current?.offsetWidth || 390
-    const newOffset = WINNER_IDX * ITEM_W + ITEM_W / 2 - containerW / 2
-
-    setWinnerIdxState(WINNER_IDX)
-    setItems(generated)
-    setOffset(0)
-
-    let tickCount = 0
-    let tickDelay = 60
-    const scheduleTick = () => {
-      if (tickCount > 80) return
-      playTick(600 + Math.random() * 200)
-      vibrate([5])
-      tickCount++
-      tickDelay = Math.min(tickDelay * 1.04, 400)
-      tickIntervalRef.current = setTimeout(scheduleTick, tickDelay)
-    }
-    scheduleTick()
-
-    // Attendre 2 frames pour que React ait rendu avec offset=0 SANS transition
-    // avant de déclencher l'animation vers newOffset
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setAnimating(true)
-        setOffset(newOffset)
-      })
-    })
-
-    setTimeout(() => {
-      clearTimeout(tickIntervalRef.current)
-      setTransitioning(true)
-      setSpinning(false)
-      setAnimating(false)
-      setWinner(picked)
-      vibrate([30, 20, 80])
-      setTimeout(() => playWin(), 300)
-
-      // Save to history
-      const entry = {
-        id: Date.now(),
-        scarfId: picked.id,
-        scarfName: picked.Name,
-        photo: picked.photo_url,
-        era: picked.era,
-        date: new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
-      }
-      const newHistory = [entry, ...loadHistory()]
-      setHistory(newHistory)
-      saveHistory(newHistory)
-    }, 7200)
+    const idx = Math.floor(Math.random() * collection.length)
+    setTargetIndex(idx)
   }, [collection, spinning])
+
+  const handleSpinEnd = useCallback(() => {
+    const picked = collection[targetIndex]
+    setSpinning(false)
+    setWinner(picked)
+    vibrate([30, 20, 80])
+    setTimeout(() => playWin(), 200)
+
+    const entry = {
+      id: Date.now(),
+      scarfId: picked.id,
+      scarfName: picked.Name,
+      photo: picked.photo_url,
+      era: picked.era,
+      date: new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+    }
+    const newHistory = [entry, ...loadHistory()]
+    setHistory(newHistory)
+    saveHistory(newHistory)
+  }, [collection, targetIndex])
 
   const deleteHistory = (id) => {
     const newHistory = history.filter(h => h.id !== id)
@@ -119,77 +258,32 @@ export default function DailyPage() {
     saveHistory(newHistory)
   }
 
-  // Count per scarf
   const counts = {}
-  history.forEach(h => {
-    counts[h.scarfName] = (counts[h.scarfName] || 0) + 1
-  })
+  history.forEach(h => { counts[h.scarfName] = (counts[h.scarfName] || 0) + 1 })
   const topScarves = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 5)
-
-  // Idle items (loop collection twice)
-  const idleItems = collection.length > 0 ? [...collection, ...collection, ...collection] : []
 
   return (
     <div className="pb-24">
       <PageHeader title="ÉCHARPE DU JOUR" subtitle="Laisse le hasard choisir 🎲" />
-      <div className="px-4 pt-6 flex flex-col items-center gap-5">
+      <div className="px-4 pt-4 flex flex-col items-center gap-5">
 
-        {/* Slot track */}
-        <div ref={trackRef} className="w-full relative overflow-hidden rounded-2xl border border-bord bg-surface" style={{ height: '176px' }}>
-          <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-0.5 z-10 pointer-events-none"
-            style={{ background: 'var(--jaune)', boxShadow: '0 0 12px rgba(245,196,0,0.7)' }} />
-          <div className="absolute left-1/2 -translate-x-1/2 -top-px z-10 text-jaune text-xs pointer-events-none">▼</div>
-          <div className="absolute left-1/2 -translate-x-1/2 -bottom-px z-10 text-jaune text-xs pointer-events-none rotate-180">▼</div>
-          <div className="absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none"
-            style={{ background: 'linear-gradient(to right, #0D1530, transparent)' }} />
-          <div className="absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none"
-            style={{ background: 'linear-gradient(to left, #0D1530, transparent)' }} />
-
-          {/* Idle scroll */}
-          {!spinning && items.length === 0 && (
-            <div className="flex items-center gap-2 p-2 absolute top-0 left-0"
-              style={{ transform: `translateX(-${idleOffset % (collection.length * ITEM_W)}px)` }}>
-              {idleItems.map((s, i) => (
-                <div key={i} className="flex-shrink-0 rounded-xl overflow-hidden border border-bord bg-surface2 flex flex-col"
-                  style={{ width:`${ITEM_W}px`, height:'160px' }}>
-                  <div className="flex-1 overflow-hidden flex items-center justify-center">
-                    {s?.photo_url
-                      ? <img src={s.photo_url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                      : <span className="text-3xl opacity-20">🧣</span>}
-                  </div>
-                  <div className="px-2 pt-1 text-[0.6rem] font-bebas text-jaune tracking-wide bg-surface">#{ getScarfNumber(s, collection)}</div>
-                  <div className="px-2 pb-1.5 text-[0.58rem] truncate text-white bg-surface">{s?.Name}</div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Spin track */}
-          {(spinning || items.length > 0) && (
-            <div className="flex items-center gap-2 p-2 absolute top-0 left-0"
-              style={{
-                transform: `translateX(-${offset}px)`,
-                transition: animating ? 'transform 7s cubic-bezier(0.05, 0.8, 0.25, 1)' : 'none'
-              }}>
-              {items.map((s, i) => (
-                <div key={i} className="flex-shrink-0 rounded-xl overflow-hidden border bg-surface2 flex flex-col"
-                  style={{ width:`${ITEM_W}px`, height:'160px', borderColor: transitioning && i === winnerIdxState ? 'rgba(245,196,0,0.8)' : 'var(--bord)' }}>
-                  <div className="flex-1 overflow-hidden flex items-center justify-center">
-                    {s?.photo_url
-                      ? <img src={s.photo_url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                      : <span className="text-3xl opacity-20">🧣</span>}
-                  </div>
-                  {s && <>
-                    <div className="px-2 pt-1 text-[0.6rem] font-bebas text-jaune tracking-wide bg-surface">#{getScarfNumber(s, collection)}</div>
-                    <div className="px-2 pb-1.5 text-[0.58rem] truncate text-white bg-surface">{s.Name}</div>
-                  </>}
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Roue */}
+        <div className="w-full flex justify-center">
+          {collection.length > 0
+            ? <FortuneWheel
+                collection={collection}
+                spinning={spinning}
+                targetIndex={targetIndex}
+                onSpinEnd={handleSpinEnd}
+              />
+            : <div className="text-center py-8">
+                <div className="text-5xl opacity-20 mb-3">🧣</div>
+                <div className="font-bebas text-2xl tracking-widest text-muted">Collection vide</div>
+              </div>
+          }
         </div>
 
-        {/* Spin button */}
+        {/* Bouton */}
         <motion.button
           className="w-full max-w-xs py-5 font-bebas text-2xl tracking-[3px] rounded-2xl cursor-pointer disabled:opacity-40"
           style={{
@@ -200,10 +294,10 @@ export default function DailyPage() {
           whileTap={{ scale: 0.96 }}
           onClick={spin}
           disabled={spinning || !collection.length}>
-          {spinning ? '⏳ EN COURS...' : winner ? '🎲 RELANCER' : '🎲 CHOISIR MON ÉCHARPE'}
+          {spinning ? '⏳ EN COURS...' : winner ? '🎲 RELANCER' : '🎲 TOURNER LA ROUE'}
         </motion.button>
 
-        {/* Winner */}
+        {/* Gagnant */}
         <AnimatePresence>
           {winner && (
             <motion.div className="w-full rounded-2xl overflow-hidden border-2 border-jaune"
@@ -227,7 +321,7 @@ export default function DailyPage() {
           )}
         </AnimatePresence>
 
-        {/* History toggle */}
+        {/* Historique */}
         {history.length > 0 && (
           <motion.button
             className="w-full py-3 bg-surface border border-bord rounded-2xl font-bebas tracking-widest text-sm text-muted cursor-pointer flex items-center justify-between px-5"
@@ -238,13 +332,10 @@ export default function DailyPage() {
           </motion.button>
         )}
 
-        {/* History list */}
         <AnimatePresence>
           {showHistory && (
             <motion.div className="w-full flex flex-col gap-3"
               initial={{ opacity:0, y:-10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}>
-
-              {/* Top scarves */}
               {topScarves.length > 0 && (
                 <div className="bg-surface border border-bord rounded-2xl p-4">
                   <div className="text-muted text-xs uppercase tracking-widest mb-3">🏆 Les plus tirées</div>
@@ -256,11 +347,9 @@ export default function DailyPage() {
                   ))}
                 </div>
               )}
-
-              {/* History entries */}
               <div className="bg-surface border border-bord rounded-2xl overflow-hidden">
                 <div className="text-muted text-xs uppercase tracking-widest p-4 pb-2">🕐 Derniers tirages</div>
-                {history.map((h, i) => (
+                {history.map((h) => (
                   <motion.div key={h.id}
                     className="flex items-center gap-3 px-4 py-3 border-t border-bord"
                     initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0, x:-20 }}>
@@ -285,13 +374,6 @@ export default function DailyPage() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {!collection.length && (
-          <div className="text-center py-8">
-            <div className="text-5xl opacity-20 mb-3">🧣</div>
-            <div className="font-bebas text-2xl tracking-widest text-muted">Collection vide</div>
-          </div>
-        )}
       </div>
     </div>
   )
