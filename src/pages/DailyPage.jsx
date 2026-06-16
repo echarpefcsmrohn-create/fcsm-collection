@@ -22,6 +22,7 @@ export default function DailyPage() {
   const [offset, setOffset] = useState(0)
   const [transitioning, setTransitioning] = useState(false)
   const [winnerIdxState, setWinnerIdxState] = useState(48)
+  const [animating, setAnimating] = useState(false)
   const [history, setHistory] = useState(loadHistory)
   const [showHistory, setShowHistory] = useState(false)
   const tickIntervalRef = useRef(null)
@@ -62,9 +63,9 @@ export default function DailyPage() {
     const newOffset = winnerIdx * ITEM_W - (wrapW / 2) + (ITEM_W / 2)
 
     setWinnerIdxState(winnerIdx)
-    // D'abord reset l'offset, puis les items, puis animer
-    setOffset(0)
+    // Reset items ET offset ensemble, puis on attend un vrai frame avant d'animer
     setItems(generated)
+    setOffset(0)
 
     let tickCount = 0
     let tickDelay = 60
@@ -78,12 +79,20 @@ export default function DailyPage() {
     }
     scheduleTick()
 
-    setTimeout(() => setOffset(newOffset), 50)
+    // Attendre 2 frames pour que React ait rendu avec offset=0 SANS transition
+    // avant de déclencher l'animation vers newOffset
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setAnimating(true)
+        setOffset(newOffset)
+      })
+    })
 
     setTimeout(() => {
       clearTimeout(tickIntervalRef.current)
       setTransitioning(true)
       setSpinning(false)
+      setAnimating(false)
       setWinner(picked)
       vibrate([30, 20, 80])
       setTimeout(() => playWin(), 300)
@@ -159,7 +168,7 @@ export default function DailyPage() {
             <div className="flex items-center gap-2 p-2 absolute top-0 left-0"
               style={{
                 transform: `translateX(-${offset}px)`,
-                transition: spinning ? 'transform 7s cubic-bezier(0.05, 0.8, 0.25, 1)' : 'none'
+                transition: animating ? 'transform 7s cubic-bezier(0.05, 0.8, 0.25, 1)' : 'none'
               }}>
               {items.map((s, i) => (
                 <div key={i} className="flex-shrink-0 rounded-xl overflow-hidden border bg-surface2 flex flex-col"
