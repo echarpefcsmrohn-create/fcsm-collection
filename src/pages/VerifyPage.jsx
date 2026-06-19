@@ -59,8 +59,8 @@ export default function VerifyPage() {
       setAnalyzeProgress(40)
       setAnalyzeStep('📡 Envoi au serveur IA...')
 
-      // On passe l'index réel (position dans collection) ET le vrai numéro affiché
-      const scarfsDesc = collection.map((s,i) => `index:${i} #${getScarfNumber(s, collection)} "${s.Name}" (ere: ${s.era||'?'})`).join('\n')
+      // On envoie l'ID Supabase réel — pas d'index, pas de confusion possible
+      const scarfsDesc = collection.map(s => `id:${s.id} #${getScarfNumber(s, collection)} "${s.Name}" (ere: ${s.era||'?'})`).join('\n')
 
       const response = await fetch(PROXY_URL, {
         method: 'POST',
@@ -73,7 +73,7 @@ export default function VerifyPage() {
             role: 'user',
             content: [
               { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:base64 } },
-              { type:'text', text:`Ma collection FCSM:\n${scarfsDesc}\n\nCette echarpe ressemble-t-elle a une de ma liste ? Reponds avec les valeurs "index" (pas le numero #). JSON: {"already_have":false,"similar_scarfs":[],"verdict":"","description":""}` }
+              { type:'text', text:`Ma collection FCSM:\n${scarfsDesc}\n\nCette echarpe ressemble-t-elle a une de ma liste ? Reponds avec les valeurs "id" Supabase exactes. JSON: {"already_have":false,"similar_scarfs":[],"verdict":"","description":""}` }
             ]
           }]
         })
@@ -97,8 +97,10 @@ export default function VerifyPage() {
       await new Promise(r => setTimeout(r, 400))
 
       const res = JSON.parse(jsonMatch[0])
-      // similar_scarfs contient maintenant des index directs (0-based)
-      const matches = (res.similar_scarfs || []).map(i => collection[i]).filter(Boolean)
+      // similar_scarfs contient maintenant des IDs Supabase
+      const matches = (res.similar_scarfs || [])
+        .map(id => collection.find(s => String(s.id) === String(id)))
+        .filter(Boolean)
 
       setAnalyzeProgress(100)
       setResult({ type:'ia', ...res, matches })
