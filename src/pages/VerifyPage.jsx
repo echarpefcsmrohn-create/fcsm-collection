@@ -59,7 +59,8 @@ export default function VerifyPage() {
       setAnalyzeProgress(40)
       setAnalyzeStep('📡 Envoi au serveur IA...')
 
-      const scarfsDesc = collection.map((s,i) => `${i+1}. "${s.Name}" (ere: ${s.era||'?'})`).join('\n')
+      // On passe l'index réel (position dans collection) ET le vrai numéro affiché
+      const scarfsDesc = collection.map((s,i) => `index:${i} #${getScarfNumber(s, collection)} "${s.Name}" (ere: ${s.era||'?'})`).join('\n')
 
       const response = await fetch(PROXY_URL, {
         method: 'POST',
@@ -72,7 +73,7 @@ export default function VerifyPage() {
             role: 'user',
             content: [
               { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:base64 } },
-              { type:'text', text:`Ma collection FCSM:\n${scarfsDesc}\n\nCette echarpe ressemble-t-elle a une de ma liste ? JSON: {"already_have":false,"similar_scarfs":[],"verdict":"","description":""}` }
+              { type:'text', text:`Ma collection FCSM:\n${scarfsDesc}\n\nCette echarpe ressemble-t-elle a une de ma liste ? Reponds avec les valeurs "index" (pas le numero #). JSON: {"already_have":false,"similar_scarfs":[],"verdict":"","description":""}` }
             ]
           }]
         })
@@ -96,7 +97,8 @@ export default function VerifyPage() {
       await new Promise(r => setTimeout(r, 400))
 
       const res = JSON.parse(jsonMatch[0])
-      const matches = (res.similar_scarfs || []).map(i => collection[i-1]).filter(Boolean)
+      // similar_scarfs contient maintenant des index directs (0-based)
+      const matches = (res.similar_scarfs || []).map(i => collection[i]).filter(Boolean)
 
       setAnalyzeProgress(100)
       setResult({ type:'ia', ...res, matches })
