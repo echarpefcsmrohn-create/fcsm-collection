@@ -94,15 +94,18 @@ export default function AddModal({ open, onClose }) {
       const embedding = await getImageEmbedding(dataUrl, 'query')
       embeddingRef.current = embedding
 
-      // Seuil 0.89 : ne remonte que les vrais doublons visuels
-      const matches = await findSimilarScarves(embedding, 0.89, 3)
+      // Seuil 0.72 : identique à VerifyPage, tolère les écharpes
+      // pliées/froissées. Les paliers de confiance affinent le message.
+      const matches = await findSimilarScarves(embedding, 0.72, 5)
 
       if (matches.length > 0) {
         const pct = Math.round(matches[0].similarity * 100)
-        setDoublonAlert({
-          matches,
-          verdict: `${pct}% de ressemblance visuelle avec une écharpe existante`
-        })
+        const verdict = pct >= 85
+          ? `${pct}% de ressemblance — c'est probablement un doublon.`
+          : pct >= 75
+            ? `${pct}% de ressemblance — assez proche, vérifie visuellement.`
+            : `${pct}% de ressemblance — probablement différent, à vérifier.`
+        setDoublonAlert({ matches, verdict })
       }
     } catch(e) { console.error('Doublon visuel check failed:', e) }
     setCheckingDoublon(false)
