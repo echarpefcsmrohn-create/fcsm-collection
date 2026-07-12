@@ -8,7 +8,7 @@ const EMBED_URL = `${PROXY_URL}/embed`
  * On vise ~200px : suffisant pour Voyage, et ça reste sous
  * le seuil des 50 000 pixels facturés au minimum.
  */
-export function compressForEmbed(src, maxSize = 200) {
+export function compressForEmbed(src, maxSize = 900) {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.crossOrigin = 'anonymous'

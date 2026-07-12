@@ -10,6 +10,7 @@ import CollectionPage from './pages/CollectionPage'
 import VerifyPage from './pages/VerifyPage'
 import StatsPage from './pages/StatsPage'
 import DailyPage from './pages/DailyPage'
+import MigratePage from './pages/MigratePage'
 import AddModal from './components/AddModal'
 
 const pageVariants = {
@@ -47,9 +48,26 @@ function AppContent() {
                 {page === 'verify' && <VerifyPage />}
                 {page === 'stats' && <StatsPage />}
                 {page === 'daily' && <DailyPage />}
+                {page === 'migrate' && <MigratePage />}
               </motion.div>
             </AnimatePresence>
           </PullToRefresh>
+
+          {/* ⚠️ TEMPORAIRE — à retirer après recalcul des embeddings */}
+          {page !== 'migrate' && (
+            <button
+              onClick={() => setPage('migrate')}
+              className="fixed top-2 right-2 z-[300] bg-red-600 text-white text-[0.6rem] px-2 py-1 rounded-full cursor-pointer opacity-70">
+              🧬 MIGRATION
+            </button>
+          )}
+          {page === 'migrate' && (
+            <button
+              onClick={() => setPage('home')}
+              className="fixed top-2 right-2 z-[300] bg-surface2 border border-bord text-white text-[0.6rem] px-2 py-1 rounded-full cursor-pointer">
+              ✕ Retour
+            </button>
+          )}
 
           <BottomNav current={page} onNavigate={setPage} onAdd={() => setShowAdd(true)} />
           <AddModal open={showAdd} onClose={() => setShowAdd(false)} />
