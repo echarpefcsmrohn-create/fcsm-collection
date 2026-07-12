@@ -56,9 +56,10 @@ export default function VerifyPage() {
       setAnalyzeProgress(50)
       setAnalyzeStep('📡 Comparaison avec ta collection...')
 
-      // Seuil 0.89 : ne remonte que les vrais doublons.
-      // En dessous, ce sont juste des ecarpes FCSM au style proche.
-      const { matches } = await checkVisualDuplicate(iaPhoto, 0.89)
+      // Seuil abaissé à 0.72 : une écharpe pliée, froissée ou photographiée
+      // différemment perd en ressemblance brute. On élargit la recherche
+      // et on laisse les paliers de confiance trancher côté affichage.
+      const { matches } = await checkVisualDuplicate(iaPhoto, 0.72)
 
       setAnalyzeProgress(90)
       await new Promise(r => setTimeout(r, 300))
@@ -70,11 +71,13 @@ export default function VerifyPage() {
 
         setResult({
           type: 'ia',
-          already_have: pct >= 90,
+          already_have: pct >= 85,
           matches,
-          verdict: pct >= 90
-            ? `C'est l'écharpe #${num} de ta collection — ${pct}% de ressemblance visuelle.`
-            : `Écharpe proche trouvée : #${num} à ${pct}%. À vérifier de près, ce n'est peut-être pas la même.`,
+          verdict: pct >= 85
+            ? `C'est probablement l'écharpe #${num} de ta collection — ${pct}% de ressemblance visuelle.`
+            : pct >= 75
+              ? `Écharpe assez proche : #${num} à ${pct}%. Regarde bien, ça peut être la même pliée différemment.`
+              : `Ressemblance faible avec #${num} (${pct}%) — vérifie visuellement, c'est probablement différent.`,
         })
       } else {
         setResult({
@@ -229,8 +232,8 @@ export default function VerifyPage() {
                     {s.similarity != null && (
                       <div className="absolute top-1.5 right-1.5 z-10 bg-noir/85 rounded-full px-2 py-0.5">
                         <span className={`font-bebas text-xs ${
-                          s.similarity >= 0.92 ? 'text-red-400'
-                          : s.similarity >= 0.90 ? 'text-orange-400'
+                          s.similarity >= 0.85 ? 'text-red-400'
+                          : s.similarity >= 0.75 ? 'text-orange-400'
                           : 'text-jaune'
                         }`}>
                           {Math.round(s.similarity * 100)}%

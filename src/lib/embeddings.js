@@ -69,7 +69,7 @@ export async function getImageEmbedding(imageSrc, inputType = 'document') {
  * @param {number} threshold - 0 à 1, plus haut = plus strict
  * @param {number} count
  */
-export async function findSimilarScarves(embedding, threshold = 0.78, count = 5) {
+export async function findSimilarScarves(embedding, threshold = 0.72, count = 5) {
   const { data, error } = await supabase.rpc('match_scarves', {
     query_embedding: embedding,
     match_threshold: threshold,
@@ -83,7 +83,7 @@ export async function findSimilarScarves(embedding, threshold = 0.78, count = 5)
  * Pipeline complet : photo → embedding → recherche de doublons.
  * Retourne { embedding, matches }
  */
-export async function checkVisualDuplicate(imageSrc, threshold = 0.78) {
+export async function checkVisualDuplicate(imageSrc, threshold = 0.89) {
   const embedding = await getImageEmbedding(imageSrc, 'query')
   const matches = await findSimilarScarves(embedding, threshold)
   return { embedding, matches }
