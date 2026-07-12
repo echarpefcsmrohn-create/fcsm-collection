@@ -4,6 +4,7 @@ import { useCollection } from '../context/CollectionContext'
 import { ERAS, getScarfNumber } from '../lib/eras'
 import PageHeader from '../components/PageHeader'
 import { checkVisualDuplicate } from '../lib/embeddings'
+import FreeCropper from '../components/FreeCropper'
 
 export default function VerifyPage() {
   const { collection } = useCollection()
@@ -11,6 +12,8 @@ export default function VerifyPage() {
   const [result, setResult] = useState(null)
 
   const [iaPhoto, setIaPhoto] = useState(null)
+  const [rawPhoto, setRawPhoto] = useState(null)  // avant recadrage
+  const [showCropper, setShowCropper] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
   const [analyzeStep, setAnalyzeStep] = useState('')
   const [analyzeProgress, setAnalyzeProgress] = useState(0)
@@ -24,10 +27,22 @@ export default function VerifyPage() {
 
   const handleIaPhoto = (file) => {
     if (!file) return
-    setIaPhoto(URL.createObjectURL(file))
+    setRawPhoto(URL.createObjectURL(file))
+    setShowCropper(true)
     setResult(null)
     setAnalyzeStep('')
     setAnalyzeProgress(0)
+  }
+
+  const handleCropDone = (croppedFile, croppedUrl) => {
+    setIaPhoto(croppedUrl)
+    setShowCropper(false)
+    setRawPhoto(null)
+  }
+
+  const handleCropCancel = () => {
+    setShowCropper(false)
+    setRawPhoto(null)
   }
 
   const analyzeVisual = async () => {
@@ -245,6 +260,14 @@ export default function VerifyPage() {
           </motion.button>
         )}
       </div>
+
+      {showCropper && rawPhoto && (
+        <FreeCropper
+          imageSrc={rawPhoto}
+          onDone={handleCropDone}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   )
 }
