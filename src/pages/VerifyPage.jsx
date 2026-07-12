@@ -1,29 +1,19 @@
 import { useState, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
-import { ERAS, getEraLabel, getScarfNumber } from '../lib/eras'
+import { ERAS, getScarfNumber } from '../lib/eras'
 import PageHeader from '../components/PageHeader'
-import { compressImage } from '../lib/cloudinary'
-
-const PROXY_URL = 'https://fcsm-ai-proxy.echarpe-fcsm-rohn.workers.dev/'
-
-function getAnthropicKey() { return localStorage.getItem('fcsm_anthropic_key') || '' }
-function setAnthropicKey(k) { localStorage.setItem('fcsm_anthropic_key', k) }
+import { checkVisualDuplicate } from '../lib/embeddings'
 
 export default function VerifyPage() {
   const { collection } = useCollection()
   const [mode, setMode] = useState('manuel')
   const [result, setResult] = useState(null)
 
-  // IA state
   const [iaPhoto, setIaPhoto] = useState(null)
-  const [iaFile, setIaFile] = useState(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [analyzeStep, setAnalyzeStep] = useState('')
   const [analyzeProgress, setAnalyzeProgress] = useState(0)
-  const [showKeyModal, setShowKeyModal] = useState(false)
-  const [keyInput, setKeyInput] = useState('')
-  const [keyError, setKeyError] = useState(false)
   const iaFileRef = useRef()
   const iaCameraRef = useRef()
 
@@ -34,92 +24,67 @@ export default function VerifyPage() {
 
   const handleIaPhoto = (file) => {
     if (!file) return
-    setIaFile(file)
     setIaPhoto(URL.createObjectURL(file))
     setResult(null)
+    setAnalyzeStep('')
+    setAnalyzeProgress(0)
   }
 
-  const analyzeWithAI = async () => {
-    if (!iaPhoto || !iaFile) return
-    if (!getAnthropicKey()) { setShowKeyModal(true); return }
+  const analyzeVisual = async () => {
+    if (!iaPhoto) return
 
     setAnalyzing(true)
-    setAnalyzeProgress(15)
-    setAnalyzeStep('🗜️ Compression de la photo...')
+    setAnalyzeProgress(20)
+    setAnalyzeStep('🧬 Calcul de l\'empreinte visuelle...')
 
     try {
-      const reader = new FileReader()
-      const dataUrl = await new Promise(resolve => {
-        reader.onload = e => resolve(e.target.result)
-        reader.readAsDataURL(iaFile)
-      })
-      const compressed = await compressImage(dataUrl, 600)
-      const base64 = compressed.split(',')[1]
+      setAnalyzeProgress(50)
+      setAnalyzeStep('📡 Comparaison avec ta collection...')
 
-      setAnalyzeProgress(40)
-      setAnalyzeStep('📡 Envoi au serveur IA...')
-
-      // On envoie l'ID Supabase réel — pas d'index, pas de confusion possible
-      const scarfsDesc = collection.map(s => `id:${s.id} #${getScarfNumber(s, collection)} "${s.Name}" (ere: ${s.era||'?'})`).join('\n')
-
-      const response = await fetch(PROXY_URL, {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', 'x-api-key': getAnthropicKey(), 'anthropic-version':'2023-06-01' },
-        body: JSON.stringify({
-          model: 'claude-opus-4-5',
-          max_tokens: 500,
-          system: 'Tu reponds UNIQUEMENT en JSON valide, sans texte autour.',
-          messages: [{
-            role: 'user',
-            content: [
-              { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:base64 } },
-              { type:'text', text:`Ma collection FCSM:\n${scarfsDesc}\n\nCette echarpe ressemble-t-elle a une de ma liste ? Reponds avec les valeurs "id" Supabase exactes. JSON: {"already_have":false,"similar_scarfs":[],"verdict":"","description":""}` }
-            ]
-          }]
-        })
-      })
-
-      setAnalyzeProgress(70)
-      setAnalyzeStep('🤖 Claude analyse l\'écharpe...')
-
-      if (!response.ok) {
-        if (response.status === 401) { setShowKeyModal(true); setAnalyzing(false); return }
-        throw new Error('Erreur API: ' + response.status)
-      }
-
-      const data = await response.json()
-      const text = data.content[0].text
-      const jsonMatch = text.match(/\{[\s\S]*\}/)
-      if (!jsonMatch) throw new Error('Réponse invalide')
+      // Seuil 0.78 : bon équilibre. Ajustable.
+      const { matches } = await checkVisualDuplicate(iaPhoto, 0.78)
 
       setAnalyzeProgress(90)
-      setAnalyzeStep('🔎 Comparaison avec ta collection...')
-      await new Promise(r => setTimeout(r, 400))
+      await new Promise(r => setTimeout(r, 300))
 
-      const res = JSON.parse(jsonMatch[0])
-      // similar_scarfs contient maintenant des IDs Supabase
-      const matches = (res.similar_scarfs || [])
-        .map(id => collection.find(s => String(s.id) === String(id)))
-        .filter(Boolean)
+      if (matches.length > 0) {
+        const best = matches[0]
+        const pct = Math.round(best.similarity * 100)
+        const num = getScarfNumber(best, collection)
+
+        setResult({
+          type: 'ia',
+          already_have: pct >= 85,
+          matches,
+          verdict: pct >= 85
+            ? `C'est l'écharpe #${num} de ta collection — ${pct}% de ressemblance visuelle.`
+            : `Écharpe proche trouvée : #${num} à ${pct}%. À vérifier de près, ce n'est peut-être pas la même.`,
+        })
+      } else {
+        setResult({
+          type: 'ia',
+          already_have: false,
+          matches: [],
+          verdict: 'Aucune écharpe visuellement similaire dans ta collection.',
+        })
+      }
 
       setAnalyzeProgress(100)
-      setResult({ type:'ia', ...res, matches })
-    } catch(e) {
+    } catch (e) {
       console.error(e)
       setAnalyzeStep('❌ ' + e.message)
-      setTimeout(() => setAnalyzeStep(''), 3000)
+      setTimeout(() => setAnalyzeStep(''), 4000)
     }
+
     setAnalyzing(false)
   }
 
-  const saveKey = () => {
-    if (!keyInput.startsWith('sk-ant-')) { setKeyError(true); return }
-    setAnthropicKey(keyInput)
-    setShowKeyModal(false)
-    setKeyError(false)
+  const reset = () => {
+    setResult(null); setIaPhoto(null)
+    setAnalyzeStep(''); setAnalyzeProgress(0)
   }
 
-  const reset = () => { setResult(null); setIaPhoto(null); setIaFile(null); setAnalyzeStep(''); setAnalyzeProgress(0) }
+  const hasMatch = result?.already_have || result?.matches?.length > 0
 
   return (
     <div className="pb-24">
@@ -128,7 +93,7 @@ export default function VerifyPage() {
 
         {/* Mode selector */}
         <div className="grid grid-cols-2 gap-2">
-          {[{ id:'manuel', label:'🏷️ PAR ÈRE' }, { id:'ia', label:'🤖 IA AUTO' }].map(m => (
+          {[{ id:'manuel', label:'🏷️ PAR ÈRE' }, { id:'ia', label:'🧬 PAR IMAGE' }].map(m => (
             <motion.button key={m.id} whileTap={{ scale:0.95 }}
               className={`py-3 rounded-2xl font-bebas text-base tracking-widest border cursor-pointer transition-colors ${mode === m.id ? 'bg-jaune/12 border-jaune text-jaune' : 'bg-surface2 border-bord text-muted'}`}
               onClick={() => { setMode(m.id); reset() }}>
@@ -156,7 +121,7 @@ export default function VerifyPage() {
           </div>
         )}
 
-        {/* MODE IA */}
+        {/* MODE IMAGE */}
         {mode === 'ia' && (
           <div className="flex flex-col gap-3">
             <div className="bg-surface border border-bord rounded-2xl p-5">
@@ -169,7 +134,11 @@ export default function VerifyPage() {
                 onClick={() => iaFileRef.current?.click()}>
                 {iaPhoto
                   ? <img src={iaPhoto} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                  : <><span className="text-3xl">📷</span><span className="text-muted text-sm">Galerie ou caméra</span><span className="text-jaune text-xs">L'IA analyse et compare</span></>}
+                  : <>
+                      <span className="text-3xl">📷</span>
+                      <span className="text-muted text-sm">Galerie ou caméra</span>
+                      <span className="text-jaune text-xs">Comparaison visuelle réelle</span>
+                    </>}
               </div>
 
               <div className="grid grid-cols-2 gap-2">
@@ -182,66 +151,85 @@ export default function VerifyPage() {
                   🖼️ Galerie
                 </button>
               </div>
-              <input ref={iaFileRef} type="file" accept="image/*" className="hidden" onChange={e => handleIaPhoto(e.target.files[0])} />
-              <input ref={iaCameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={e => handleIaPhoto(e.target.files[0])} />
+              <input ref={iaFileRef} type="file" accept="image/*" className="hidden"
+                onChange={e => { handleIaPhoto(e.target.files[0]); e.target.value='' }} />
+              <input ref={iaCameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+                onChange={e => { handleIaPhoto(e.target.files[0]); e.target.value='' }} />
             </div>
 
-            {/* Analyze button or progress */}
             {iaPhoto && !analyzing && !result && (
-              <motion.button onClick={analyzeWithAI} whileTap={{ scale:0.97 }}
+              <motion.button onClick={analyzeVisual} whileTap={{ scale:0.97 }}
                 className="w-full py-4 bg-jaune text-bleu2 font-bebas text-xl tracking-widest rounded-2xl cursor-pointer"
                 style={{ boxShadow:'0 4px 20px rgba(245,196,0,0.3)' }}>
-                🤖 ANALYSER AVEC L'IA
+                🧬 COMPARER VISUELLEMENT
               </motion.button>
             )}
 
             {analyzing && (
               <div className="bg-surface border border-bord rounded-2xl p-5 text-center">
-                <div className="text-2xl mb-2">🤖</div>
-                <div className="font-bebas text-lg tracking-widest text-jaune mb-1">ANALYSE EN COURS</div>
+                <div className="text-2xl mb-2">🧬</div>
+                <div className="font-bebas text-lg tracking-widest text-jaune mb-1">ANALYSE VISUELLE</div>
                 <div className="text-muted text-xs mb-4">{analyzeStep}</div>
                 <div className="w-full bg-surface2 rounded-full h-1.5 overflow-hidden">
                   <motion.div className="h-full bg-jaune rounded-full"
                     animate={{ width: `${analyzeProgress}%` }}
-                    transition={{ duration:0.5, ease:'easeOut' }} />
+                    transition={{ duration:0.4, ease:'easeOut' }} />
                 </div>
               </div>
             )}
 
-            <button onClick={() => setShowKeyModal(true)}
-              className="w-full py-2.5 bg-surface2 border border-bord text-muted font-bebas tracking-widest rounded-xl cursor-pointer text-sm">
-              ⚙️ CONFIGURER MA CLÉ IA
-            </button>
+            {!analyzing && analyzeStep.startsWith('❌') && (
+              <div className="bg-red-500/10 border border-red-500/40 rounded-2xl p-3 text-center">
+                <div className="text-red-400 text-xs">{analyzeStep}</div>
+              </div>
+            )}
           </div>
         )}
 
         {/* RESULT */}
         {result && (
           <motion.div
-            className={`rounded-2xl p-5 border-2 ${result.already_have || result.matches?.length > 0 ? 'bg-red-500/8 border-red-500' : 'bg-green-500/8 border-green-500'}`}
+            className={`rounded-2xl p-5 border-2 ${hasMatch ? 'bg-red-500/8 border-red-500' : 'bg-green-500/8 border-green-500'}`}
             initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}>
             <div className="text-center mb-4">
-              <div className="text-4xl mb-2">{result.already_have || result.matches?.length > 0 ? '⚠️' : '✅'}</div>
-              <div className={`font-bebas text-2xl tracking-widest ${result.already_have || result.matches?.length > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                {result.already_have || result.matches?.length > 0 ? "TU L'AS DÉJÀ !" : "TU NE L'AS PAS !"}
+              <div className="text-4xl mb-2">{hasMatch ? '⚠️' : '✅'}</div>
+              <div className={`font-bebas text-2xl tracking-widest ${hasMatch ? 'text-red-400' : 'text-green-400'}`}>
+                {result.already_have ? "TU L'AS DÉJÀ !"
+                  : result.matches?.length > 0 ? "ÉCHARPE PROCHE TROUVÉE"
+                  : "TU NE L'AS PAS !"}
               </div>
               <div className="text-muted text-sm mt-1">
                 {result.verdict || (result.matches?.length > 0
-                  ? `Tu as ${result.matches.length} écharpe${result.matches.length>1?'s':''} similaire${result.matches.length>1?'s':''}`
+                  ? `Tu as ${result.matches.length} écharpe${result.matches.length>1?'s':''} de cette ère`
                   : 'Tu peux l\'acheter en toute confiance !')}
               </div>
-              {result.description && <div className="text-argent text-xs mt-1 italic">🔍 {result.description}</div>}
             </div>
+
             {result.matches?.length > 0 && (
               <div className="grid grid-cols-2 gap-2">
                 {result.matches.map(s => (
-                  <div key={s.id} className="bg-surface2 rounded-xl overflow-hidden border border-bord">
+                  <div key={s.id} className="bg-surface2 rounded-xl overflow-hidden border border-bord relative">
+                    {/* Badge % de similarité (mode image seulement) */}
+                    {s.similarity != null && (
+                      <div className="absolute top-1.5 right-1.5 z-10 bg-noir/85 rounded-full px-2 py-0.5">
+                        <span className={`font-bebas text-xs ${
+                          s.similarity >= 0.85 ? 'text-red-400'
+                          : s.similarity >= 0.80 ? 'text-orange-400'
+                          : 'text-jaune'
+                        }`}>
+                          {Math.round(s.similarity * 100)}%
+                        </span>
+                      </div>
+                    )}
                     <div className="aspect-[4/3] flex items-center justify-center overflow-hidden">
                       {s.photo_url
                         ? <img src={s.photo_url} alt={s.Name} className="w-full h-full object-cover" />
                         : <span className="text-2xl">🧣</span>}
                     </div>
-                    <div className="p-2 text-xs font-semibold truncate">{s.Name}</div>
+                    <div className="px-2 pt-1.5 text-[0.6rem] font-bebas text-jaune tracking-wide">
+                      #{getScarfNumber(s, collection)}
+                    </div>
+                    <div className="px-2 pb-2 text-xs font-semibold truncate">{s.Name}</div>
                   </div>
                 ))}
               </div>
@@ -256,40 +244,6 @@ export default function VerifyPage() {
           </motion.button>
         )}
       </div>
-
-      {/* Key modal */}
-      <AnimatePresence>
-        {showKeyModal && (
-          <div className="fixed inset-0 z-[500] flex items-end justify-center bg-noir/80"
-            onClick={e => e.target === e.currentTarget && setShowKeyModal(false)}>
-            <motion.div className="bg-surface border-t-2 border-jaune w-full max-w-[480px] rounded-t-3xl p-6"
-              initial={{ y:'100%' }} animate={{ y:0 }} exit={{ y:'100%' }}
-              transition={{ type:'spring', damping:25, stiffness:300 }}>
-              <div className="w-10 h-1 bg-bord rounded-full mx-auto mb-4" />
-              <div className="text-center mb-4">
-                <div className="text-3xl mb-2">🤖</div>
-                <div className="font-bebas text-xl tracking-widest text-jaune">CLÉ API ANTHROPIC</div>
-                <div className="text-muted text-xs mt-1">Sauvegardée uniquement sur ton appareil</div>
-              </div>
-              <input type="password"
-                className="w-full bg-surface2 border border-bord rounded-xl px-4 py-3 text-white outline-none focus:border-jaune text-sm mb-2"
-                placeholder="sk-ant-..."
-                value={keyInput} onChange={e => { setKeyInput(e.target.value); setKeyError(false) }} />
-              {keyError && <div className="text-red-400 text-xs mb-2">❌ Clé invalide</div>}
-              <motion.button onClick={saveKey} whileTap={{ scale:0.97 }}
-                className="w-full py-4 bg-jaune text-bleu2 font-bebas text-xl tracking-widest rounded-2xl cursor-pointer">
-                ENREGISTRER
-              </motion.button>
-              {getAnthropicKey() && (
-                <button onClick={() => { setAnthropicKey(''); setShowKeyModal(false) }}
-                  className="w-full py-3 mt-2 text-red-400 text-sm cursor-pointer">
-                  Supprimer la clé
-                </button>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }
