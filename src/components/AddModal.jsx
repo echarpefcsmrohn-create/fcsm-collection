@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
 import { ERAS } from '../lib/eras'
 import { uploadToCloudinary, removeBackground, compressImage, getRemoveBgCredits } from '../lib/cloudinary'
+import { getImageEmbedding, findSimilarScarves } from '../lib/embeddings'
 import { playAdd, vibrate } from '../lib/sounds'
 import confetti from 'canvas-confetti'
 
@@ -38,6 +39,7 @@ export default function AddModal({ open, onClose }) {
     setStep(''); setProcessing(false); setSaving(false)
     setDoublonAlert(null); setCheckingDoublon(false)
     setCredits(null)
+    embeddingRef.current = null
   }
 
   const fetchCredits = async () => {
@@ -81,35 +83,28 @@ export default function AddModal({ open, onClose }) {
     reader.readAsDataURL(finalFile)
   }
 
+  // Empreinte visuelle calculée à l'ajout — réutilisée dans handleSave
+  // pour ne pas la calculer deux fois.
+  const embeddingRef = useRef(null)
+
   const checkDoublon = async (dataUrl) => {
-    if (!getAnthropicKey() || !collection.length) return
+    if (!collection.length) return
     setCheckingDoublon(true)
     try {
-      const compressed = await compressImage(dataUrl, 400)
-      const base64 = compressed.split(',')[1]
-      const scarfsDesc = collection.map((s,i) => `${i+1}. "${s.Name}" (ere: ${s.era||'?'})`).join('\n')
-      const r = await fetch(PROXY_URL, {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', 'x-api-key': getAnthropicKey(), 'anthropic-version':'2023-06-01' },
-        body: JSON.stringify({
-          model: 'claude-opus-4-5', max_tokens: 200,
-          system: 'Tu reponds UNIQUEMENT en JSON valide.',
-          messages: [{ role:'user', content: [
-            { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:base64 } },
-            { type:'text', text:`Ma collection:\n${scarfsDesc}\n\nJSON: {"already_have":false,"similar_scarfs":[],"verdict":""}` }
-          ]}]
+      const embedding = await getImageEmbedding(dataUrl, 'query')
+      embeddingRef.current = embedding
+
+      // Seuil 0.89 : ne remonte que les vrais doublons visuels
+      const matches = await findSimilarScarves(embedding, 0.89, 3)
+
+      if (matches.length > 0) {
+        const pct = Math.round(matches[0].similarity * 100)
+        setDoublonAlert({
+          matches,
+          verdict: `${pct}% de ressemblance visuelle avec une écharpe existante`
         })
-      })
-      if (!r.ok) return
-      const data = await r.json()
-      const match = data.content[0].text.match(/\{[\s\S]*\}/)
-      if (!match) return
-      const res = JSON.parse(match[0])
-      if (res.already_have && res.similar_scarfs?.length > 0) {
-        const matches = res.similar_scarfs.map(i => collection[i-1]).filter(Boolean)
-        setDoublonAlert({ matches, verdict: res.verdict })
       }
-    } catch(e) { console.error('Doublon check failed:', e) }
+    } catch(e) { console.error('Doublon visuel check failed:', e) }
     setCheckingDoublon(false)
   }
 
@@ -148,14 +143,35 @@ export default function AddModal({ open, onClose }) {
     setStep('📤 Upload en cours...')
     try {
       let photo_url = null
+      let embedding = embeddingRef.current  // déjà calculé lors du checkDoublon
+
       if (processedFile) {
         photo_url = await uploadToCloudinary(processedFile)
+
+        // Si l'embedding n'a pas encore été calculé (ex: collection vide au 1er ajout)
+        if (!embedding) {
+          try {
+            setStep('🧬 Calcul de l\'empreinte visuelle...')
+            const reader = new FileReader()
+            const dataUrl = await new Promise((res, rej) => {
+              reader.onload = e => res(e.target.result)
+              reader.onerror = rej
+              reader.readAsDataURL(processedFile)
+            })
+            embedding = await getImageEmbedding(dataUrl, 'document')
+          } catch (e) {
+            console.error('Embedding failed:', e)
+            // On continue sans embedding plutôt que de bloquer l'ajout
+          }
+        }
       }
+
       await add({
         Name: name.trim(),
         era: era || null,
         price: price ? parseFloat(price) : null,
         photo_url,
+        embedding,
         added_at: new Date().toISOString()
       })
       vibrate([30, 20, 60])
@@ -268,7 +284,7 @@ export default function AddModal({ open, onClose }) {
                 {checkingDoublon && (
                   <div className="flex items-center gap-2 mt-2 bg-jaune/6 border border-jaune/20 rounded-xl px-3 py-2">
                     <div className="w-4 h-4 border-2 border-jaune/30 border-t-jaune rounded-full animate-spin-slow flex-shrink-0" />
-                    <span className="text-muted text-xs">🤖 L'IA vérifie les doublons...</span>
+                    <span className="text-muted text-xs">🧬 Comparaison visuelle en cours...</span>
                   </div>
                 )}
                 {doublonAlert && (
@@ -277,7 +293,7 @@ export default function AddModal({ open, onClose }) {
                     <div className="flex items-start gap-2 mb-2">
                       <span className="text-xl">⚠️</span>
                       <div>
-                        <div className="text-red-400 font-bold text-sm">L'IA a détecté un possible doublon !</div>
+                        <div className="text-red-400 font-bold text-sm">Cette écharpe ressemble à une existante !</div>
                         <div className="text-muted text-xs mt-0.5">{doublonAlert.verdict || 'Modèle similaire dans ta collection'}</div>
                       </div>
                     </div>
