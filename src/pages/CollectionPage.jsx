@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useDeferredValue } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
 import ScarfCard from '../components/ScarfCard'
@@ -23,13 +23,33 @@ export default function CollectionPage() {
   const [selected, setSelected] = useState(null)
   const [showPresentation, setShowPresentation] = useState(false)
 
-  let data = [...collection]
-  if (filterEra !== 'all') data = data.filter(s => s.era === filterEra)
-  if (search) data = data.filter(s => s.Name?.toLowerCase().includes(search.toLowerCase()))
-  if (sort === 'date-desc') data.sort((a,b) => new Date(b.added_at) - new Date(a.added_at))
-  else if (sort === 'date-asc') data.sort((a,b) => new Date(a.added_at) - new Date(b.added_at))
-  else if (sort === 'era-asc') data.sort((a,b) => ERA_ORDER.indexOf(a.era) - ERA_ORDER.indexOf(b.era))
-  else if (sort === 'era-desc') data.sort((a,b) => ERA_ORDER.indexOf(b.era) - ERA_ORDER.indexOf(a.era))
+  // La frappe reste fluide : React affiche le champ immédiatement et
+  // recalcule la grille avec un léger différé, sans bloquer la saisie.
+  const deferredSearch = useDeferredValue(search)
+
+  // Filtrage + tri recalculés uniquement quand un critère change,
+  // au lieu d'à chaque render.
+  const data = useMemo(() => {
+    let d = collection
+    if (filterEra !== 'all') d = d.filter(s => s.era === filterEra)
+    if (deferredSearch) {
+      const q = deferredSearch.toLowerCase()
+      d = d.filter(s => s.Name?.toLowerCase().includes(q))
+    }
+    d = [...d]
+    // Dates pré-converties une fois : évite un new Date() par comparaison
+    if (sort === 'date-desc' || sort === 'date-asc') {
+      const t = new Map(d.map(s => [s.id, new Date(s.added_at).getTime()]))
+      d.sort((a, b) => sort === 'date-desc'
+        ? t.get(b.id) - t.get(a.id)
+        : t.get(a.id) - t.get(b.id))
+    } else if (sort === 'era-asc') {
+      d.sort((a, b) => ERA_ORDER.indexOf(a.era) - ERA_ORDER.indexOf(b.era))
+    } else if (sort === 'era-desc') {
+      d.sort((a, b) => ERA_ORDER.indexOf(b.era) - ERA_ORDER.indexOf(a.era))
+    }
+    return d
+  }, [collection, filterEra, deferredSearch, sort])
 
   return (
     <div className="pb-24">
@@ -88,21 +108,21 @@ export default function CollectionPage() {
             </div>
           </div>
         ) : (
-          <motion.div className="grid grid-cols-2 gap-3" layout>
-            <AnimatePresence>
-              {data.map((s, i) => (
-                <motion.div
-                  key={s.id}
-                  initial={{ opacity:0, y:20 }}
-                  animate={{ opacity:1, y:0 }}
-                  exit={{ opacity:0, scale:0.9 }}
-                  transition={{ delay: i * 0.04, duration:0.3 }}
-                >
-                  <ScarfCard scarf={s} onClick={setSelected} />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
+          <div className="grid grid-cols-2 gap-3">
+            {data.map((s, i) => (
+              <motion.div
+                key={s.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                // Le décalage ne s'applique qu'aux 8 premières cartes et est
+                // plafonné à 0,16 s. Avant, `i * 0.04` donnait 4 s d'attente
+                // sur la 100e carte — d'où les tuiles vides.
+                transition={{ delay: Math.min(i, 8) * 0.02, duration: 0.2 }}
+              >
+                <ScarfCard scarf={s} onClick={setSelected} />
+              </motion.div>
+            ))}
+          </div>
         )}
       </div>
 

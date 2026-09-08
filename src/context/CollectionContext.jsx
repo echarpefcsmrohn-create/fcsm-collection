@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { getScarves, addScarf, updateScarf, deleteScarf } from '../lib/supabase'
 
 // v2 : nouvelle clé pour purger les anciens caches qui contenaient les
@@ -46,7 +46,7 @@ export function CollectionProvider({ children }) {
 
   useEffect(() => { load() }, [load])
 
-  const add = async (scarf) => {
+  const add = useCallback(async (scarf) => {
     const saved = await addScarf(scarf)
     setCollection(prev => {
       const next = [saved, ...prev]
@@ -54,28 +54,35 @@ export function CollectionProvider({ children }) {
       return next
     })
     return saved
-  }
+  }, [])
 
-  const update = async (id, updates) => {
+  const update = useCallback(async (id, updates) => {
     await updateScarf(id, updates)
     setCollection(prev => {
       const next = prev.map(s => String(s.id) === String(id) ? { ...s, ...updates } : s)
       saveCache(next)
       return next
     })
-  }
+  }, [])
 
-  const remove = async (id) => {
+  const remove = useCallback(async (id) => {
     await deleteScarf(id)
     setCollection(prev => {
       const next = prev.filter(s => String(s.id) !== String(id))
       saveCache(next)
       return next
     })
-  }
+  }, [])
+
+  // Référence stable : sans ce useMemo, l'objet est recréé à chaque render
+  // et tous les composants abonnés (dont les 100 cartes) re-rendent.
+  const value = useMemo(
+    () => ({ collection, loading, error, load, add, update, remove }),
+    [collection, loading, error, load, add, update, remove]
+  )
 
   return (
-    <CollectionContext.Provider value={{ collection, loading, error, load, add, update, remove }}>
+    <CollectionContext.Provider value={value}>
       {children}
     </CollectionContext.Provider>
   )

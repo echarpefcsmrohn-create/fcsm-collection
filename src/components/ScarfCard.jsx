@@ -1,9 +1,10 @@
+import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { getEraLabel, getScarfNumber } from '../lib/eras'
 import { useCollection } from '../context/CollectionContext'
 import { cldUrl } from '../lib/cloudinary'
 
-export default function ScarfCard({ scarf, onClick }) {
+function ScarfCard({ scarf, onClick }) {
   const { collection } = useCollection()
   const num = getScarfNumber(scarf, collection)
   const eraLabel = getEraLabel(scarf.era)
@@ -15,7 +16,6 @@ export default function ScarfCard({ scarf, onClick }) {
       whileTap={{ scale: 0.95 }}
       whileHover={{ borderColor: 'rgba(245,196,0,0.5)', y: -2 }}
       onClick={() => onClick(scarf)}
-      layout
     >
       <div className="aspect-[4/3] overflow-hidden flex items-center justify-center relative"
         style={{ background: 'linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #0a1628 100%)' }}>
@@ -44,3 +44,12 @@ export default function ScarfCard({ scarf, onClick }) {
     </motion.div>
   )
 }
+
+// Évite de re-rendre les 100 cartes quand seule une partie change.
+export default memo(ScarfCard, (prev, next) =>
+  prev.scarf.id === next.scarf.id &&
+  prev.scarf.Name === next.scarf.Name &&
+  prev.scarf.era === next.scarf.era &&
+  prev.scarf.price === next.scarf.price &&
+  prev.scarf.photo_url === next.scarf.photo_url
+)
