@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
-import { ERAS, getScarfNumber } from '../lib/eras'
+import { ERAS, getScarfNumber, normalizeEra } from '../lib/eras'
 import PageHeader from '../components/PageHeader'
 import { checkVisualDuplicate } from '../lib/embeddings'
 import FreeCropper from '../components/FreeCropper'
@@ -22,7 +22,7 @@ export default function VerifyPage() {
   const iaCameraRef = useRef()
 
   const runVerify = (eraId) => {
-    const matches = collection.filter(s => s.era === eraId)
+    const matches = collection.filter(s => normalizeEra(s.era) === eraId)
     setResult({ type: 'manuel', eraId, matches })
   }
 

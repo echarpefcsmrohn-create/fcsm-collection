@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
-import { ERAS } from '../lib/eras'
+import { ERAS, normalizeEra } from '../lib/eras'
 import PageHeader from '../components/PageHeader'
 import { useAnimatedNumber } from '../hooks/useAnimatedNumber'
+import { getMatchStats, RESULTS } from '../lib/match'
 
 function StatTile({ icon, label, value, delay = 0, highlight = false }) {
   const num = typeof value === 'number' ? value : null
@@ -57,11 +58,16 @@ export default function StatsPage() {
     </div>
   )
 
+  const matchStats = getMatchStats(collection)
   const avecPhoto = collection.filter(s => s.photo_url).length
   const avecPrix = collection.filter(s => s.price)
   const totalPrix = avecPrix.reduce((sum, s) => sum + (s.price || 0), 0)
   const parEra = {}
-  collection.forEach(s => { if (s.era) parEra[s.era] = (parEra[s.era] || 0) + 1 })
+  // Les écharpes sans ère sont comptées sous « Indéterminée »
+  collection.forEach(s => {
+    const e = normalizeEra(s.era)
+    parEra[e] = (parEra[e] || 0) + 1
+  })
   const erasSorted = ERAS.filter(e => parEra[e.id]).sort((a, b) => (parEra[b.id] || 0) - (parEra[a.id] || 0))
 
   // Monthly
@@ -108,6 +114,61 @@ export default function StatsPage() {
             ? <StatTile icon="💰" label="Valeur totale" value={`${totalPrix.toFixed(0)}€`} delay={0.3} highlight />
             : <StatTile icon="💶" label="Prix renseignés" value={0} delay={0.3} />}
         </div>
+
+        {/* Bilan des matchs */}
+        {matchStats.total > 0 && (
+          <motion.div className="bg-surface border border-bord rounded-2xl p-5"
+            initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.35 }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-muted text-xs uppercase tracking-widest">⚔️ Bilan des matchs</div>
+              <div className="text-jaune font-bebas text-sm">{matchStats.total} écharpe{matchStats.total > 1 ? 's' : ''}</div>
+            </div>
+
+            {/* Barre V / N / D */}
+            <div className="flex rounded-xl overflow-hidden h-9 mb-3">
+              {['win','draw','loss'].map(k => matchStats[k] > 0 && (
+                <motion.div key={k}
+                  className="flex items-center justify-center text-xs font-bold"
+                  style={{ background: RESULTS[k].color, color: k === 'draw' ? '#0a1628' : '#fff' }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(matchStats[k] / matchStats.total) * 100}%` }}
+                  transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}>
+                  {matchStats[k]}
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {[['win','Victoires'],['draw','Nuls'],['loss','Défaites']].map(([k,label]) => (
+                <div key={k} className="text-center rounded-xl py-2"
+                  style={{ background: RESULTS[k].bg, border: `1px solid ${RESULTS[k].border}` }}>
+                  <div className="font-bebas text-2xl leading-none" style={{ color: RESULTS[k].color }}>
+                    {matchStats[k]}
+                  </div>
+                  <div className="text-muted text-[0.6rem] uppercase tracking-widest mt-1">{label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between border-t border-bord pt-3">
+              <div className="text-center flex-1">
+                <div className="font-bebas text-xl text-jaune leading-none">{matchStats.goalsFor}</div>
+                <div className="text-muted text-[0.6rem] uppercase tracking-widest mt-1">Buts pour</div>
+              </div>
+              <div className="text-center flex-1 border-x border-bord">
+                <div className="font-bebas text-xl text-white leading-none">
+                  {matchStats.goalsFor - matchStats.goalsAgainst > 0 ? '+' : ''}
+                  {matchStats.goalsFor - matchStats.goalsAgainst}
+                </div>
+                <div className="text-muted text-[0.6rem] uppercase tracking-widest mt-1">Différence</div>
+              </div>
+              <div className="text-center flex-1">
+                <div className="font-bebas text-xl text-argent leading-none">{matchStats.goalsAgainst}</div>
+                <div className="text-muted text-[0.6rem] uppercase tracking-widest mt-1">Buts contre</div>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Photos bar */}
         <motion.div className="bg-surface border border-bord rounded-2xl p-5"

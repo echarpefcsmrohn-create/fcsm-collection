@@ -3,12 +3,15 @@ import { motion } from 'framer-motion'
 import { getEraLabel, getScarfNumber } from '../lib/eras'
 import { useCollection } from '../context/CollectionContext'
 import { cldUrl } from '../lib/cloudinary'
+import { getResultStyle, formatScoreFcsm } from '../lib/match'
 
 function ScarfCard({ scarf, onClick }) {
   const { collection } = useCollection()
   const num = getScarfNumber(scarf, collection)
   const eraLabel = getEraLabel(scarf.era)
   const photo = scarf.photo_url
+  const result = getResultStyle(scarf)
+  const score = formatScoreFcsm(scarf)
 
   return (
     <motion.div
@@ -28,7 +31,14 @@ function ScarfCard({ scarf, onClick }) {
         {/* Subtle gold shimmer overlay */}
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(245,196,0,0.04) 0%, transparent 70%)' }} />
-        {scarf.era && (
+        {result && score && (
+          <div
+            className="absolute bottom-1.5 right-1.5 rounded-md px-1.5 py-0.5 font-bebas text-[0.7rem] tracking-wider backdrop-blur-sm"
+            style={{ background: result.bg, border: `1px solid ${result.border}`, color: result.color }}>
+            {score}
+          </div>
+        )}
+        {(
           <div className="absolute top-1.5 left-1.5 bg-noir/80 border border-jaune/40 rounded-md px-1.5 py-0.5 text-jaune text-[0.58rem] font-bold backdrop-blur-sm">
             {eraLabel}
           </div>
@@ -51,5 +61,8 @@ export default memo(ScarfCard, (prev, next) =>
   prev.scarf.Name === next.scarf.Name &&
   prev.scarf.era === next.scarf.era &&
   prev.scarf.price === next.scarf.price &&
-  prev.scarf.photo_url === next.scarf.photo_url
+  prev.scarf.photo_url === next.scarf.photo_url &&
+  prev.scarf.is_match === next.scarf.is_match &&
+  prev.scarf.score_fcsm === next.scarf.score_fcsm &&
+  prev.scarf.score_opponent === next.scarf.score_opponent
 )

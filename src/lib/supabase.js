@@ -8,7 +8,7 @@ export const supabase = createClient(
 // Colonnes utiles à l'affichage. `embedding` est volontairement exclu :
 // le vecteur (1024 dimensions) pèse ~1,9 Mo pour 99 écharpes et n'est jamais
 // lu côté app — la comparaison visuelle se fait côté Supabase via pgvector.
-const SCARF_COLUMNS = 'id, Name, era, price, photo_url, added_at'
+const SCARF_COLUMNS = 'id, Name, era, price, photo_url, added_at, is_match, opponent, competition, match_date, score_fcsm, score_opponent, is_home'
 
 export async function getScarves() {
   const { data, error } = await supabase

@@ -4,7 +4,7 @@ import { useCollection } from '../context/CollectionContext'
 import ScarfCard from '../components/ScarfCard'
 import SkeletonCard from '../components/SkeletonCard'
 import PageHeader from '../components/PageHeader'
-import { ERAS, ERA_ORDER } from '../lib/eras'
+import { ERAS, ERA_ORDER, normalizeEra } from '../lib/eras'
 import ScarfDetail from '../components/ScarfDetail'
 import PresentationMode from '../components/PresentationMode'
 
@@ -31,7 +31,7 @@ export default function CollectionPage() {
   // au lieu d'à chaque render.
   const data = useMemo(() => {
     let d = collection
-    if (filterEra !== 'all') d = d.filter(s => s.era === filterEra)
+    if (filterEra !== 'all') d = d.filter(s => normalizeEra(s.era) === filterEra)
     if (deferredSearch) {
       const q = deferredSearch.toLowerCase()
       d = d.filter(s => s.Name?.toLowerCase().includes(q))
@@ -44,9 +44,9 @@ export default function CollectionPage() {
         ? t.get(b.id) - t.get(a.id)
         : t.get(a.id) - t.get(b.id))
     } else if (sort === 'era-asc') {
-      d.sort((a, b) => ERA_ORDER.indexOf(a.era) - ERA_ORDER.indexOf(b.era))
+      d.sort((a, b) => ERA_ORDER.indexOf(normalizeEra(a.era)) - ERA_ORDER.indexOf(normalizeEra(b.era)))
     } else if (sort === 'era-desc') {
-      d.sort((a, b) => ERA_ORDER.indexOf(b.era) - ERA_ORDER.indexOf(a.era))
+      d.sort((a, b) => ERA_ORDER.indexOf(normalizeEra(b.era)) - ERA_ORDER.indexOf(normalizeEra(a.era)))
     }
     return d
   }, [collection, filterEra, deferredSearch, sort])

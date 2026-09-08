@@ -6,6 +6,7 @@ import { uploadToCloudinary, removeBackground } from '../lib/cloudinary'
 import { playDelete, vibrate } from '../lib/sounds'
 import PhotoViewer from './PhotoViewer'
 import { cldUrl } from '../lib/cloudinary'
+import { getResultStyle, formatScore, formatFixture, formatMatchDate } from '../lib/match'
 
 export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
   const { collection, update, remove } = useCollection()
@@ -13,6 +14,13 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
   const [editName, setEditName] = useState(scarf.Name)
   const [editEra, setEditEra] = useState(scarf.era)
   const [editPrice, setEditPrice] = useState(scarf.price || '')
+  const [editIsMatch, setEditIsMatch] = useState(scarf.is_match || false)
+  const [editOpponent, setEditOpponent] = useState(scarf.opponent || '')
+  const [editCompetition, setEditCompetition] = useState(scarf.competition || '')
+  const [editMatchDate, setEditMatchDate] = useState(scarf.match_date || '')
+  const [editScoreFcsm, setEditScoreFcsm] = useState(scarf.score_fcsm ?? '')
+  const [editScoreOpp, setEditScoreOpp] = useState(scarf.score_opponent ?? '')
+  const [editIsHome, setEditIsHome] = useState(scarf.is_home !== false)
   const [saving, setSaving] = useState(false)
   const [lightbox, setLightbox] = useState(false)
   const [reprocessing, setReprocessing] = useState(false)
@@ -26,11 +34,25 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
   const num = getScarfNumber(scarf, collection)
   const eraLabel = getEraLabel(currentScarf.era || scarf.era)
   const currentPhoto = currentScarf.photo_url
+  const matchResult = getResultStyle(currentScarf)
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      await update(scarf.id, { Name: editName, era: editEra || null, price: editPrice ? parseFloat(editPrice) : null })
+      await update(scarf.id, {
+        Name: editName,
+        era: editEra || null,
+        price: editPrice ? parseFloat(editPrice) : null,
+        is_match: editIsMatch,
+        // Les champs de match sont remis à null si la case est décochée,
+        // pour ne pas laisser de données orphelines en base.
+        opponent:       editIsMatch ? (editOpponent.trim() || null) : null,
+        competition:    editIsMatch ? (editCompetition.trim() || null) : null,
+        match_date:     editIsMatch ? (editMatchDate || null) : null,
+        score_fcsm:     editIsMatch && editScoreFcsm !== '' ? parseInt(editScoreFcsm, 10) : null,
+        score_opponent: editIsMatch && editScoreOpp  !== '' ? parseInt(editScoreOpp, 10)  : null,
+        is_home:        editIsMatch ? editIsHome : null,
+      })
       setEditing(false)
     } finally { setSaving(false) }
   }
@@ -190,6 +212,36 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
                 Ajoutée le {new Date(scarf.added_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })}
               </div>
 
+              {/* Rencontre */}
+              {matchResult && (
+                <div className="rounded-2xl p-4 mb-4"
+                  style={{ background: matchResult.bg, border: `1px solid ${matchResult.border}` }}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bebas text-base tracking-wider text-white truncate">
+                        {formatFixture(currentScarf)}
+                      </div>
+                      {currentScarf.competition && (
+                        <div className="text-muted text-xs mt-0.5 truncate">{currentScarf.competition}</div>
+                      )}
+                      {formatMatchDate(currentScarf) && (
+                        <div className="text-muted text-[0.68rem] mt-0.5">
+                          {formatMatchDate(currentScarf)} · {currentScarf.is_home === false ? 'Extérieur' : 'Domicile'}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="font-bebas text-3xl leading-none" style={{ color: matchResult.color }}>
+                        {formatScore(currentScarf)}
+                      </div>
+                      <div className="text-[0.6rem] uppercase tracking-widest mt-1" style={{ color: matchResult.color }}>
+                        {matchResult.label}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Bouton détourer */}
               <motion.button onClick={handleReprocess} disabled={reprocessing || !currentPhoto} whileTap={{ scale:0.97 }}
                 className="w-full py-3 rounded-2xl font-bebas tracking-widest text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
@@ -223,6 +275,92 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
                 <input type="number" className="w-full bg-surface2 border border-bord rounded-xl px-4 py-3 text-white outline-none focus:border-jaune text-sm"
                   value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="ex: 15" />
               </div>
+              {/* Écharpe de match */}
+              <div className="rounded-2xl border border-bord bg-surface2/50 overflow-hidden">
+                <button
+                  onClick={() => setEditIsMatch(!editIsMatch)}
+                  className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer">
+                  <div className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors"
+                    style={{
+                      borderColor: editIsMatch ? '#F5C400' : 'var(--bord)',
+                      background:  editIsMatch ? '#F5C400' : 'transparent',
+                    }}>
+                    {editIsMatch && <span className="text-bleu2 text-xs font-black">✓</span>}
+                  </div>
+                  <span className="text-sm text-white">Écharpe de match</span>
+                </button>
+
+                {editIsMatch && (
+                  <div className="px-4 pb-4 flex flex-col gap-3 border-t border-bord pt-3">
+                    <div>
+                      <label className="text-muted text-xs uppercase tracking-widest mb-1.5 block">Adversaire</label>
+                      <input
+                        className="w-full bg-surface border border-bord rounded-xl px-4 py-2.5 text-white outline-none focus:border-jaune text-sm"
+                        value={editOpponent}
+                        onChange={e => setEditOpponent(e.target.value)}
+                        placeholder="ex : AS Monaco" />
+                    </div>
+
+                    <div>
+                      <label className="text-muted text-xs uppercase tracking-widest mb-1.5 block">Compétition</label>
+                      <input
+                        className="w-full bg-surface border border-bord rounded-xl px-4 py-2.5 text-white outline-none focus:border-jaune text-sm"
+                        value={editCompetition}
+                        onChange={e => setEditCompetition(e.target.value)}
+                        placeholder="ex : Finale Coupe de la Ligue" />
+                    </div>
+
+                    <div>
+                      <label className="text-muted text-xs uppercase tracking-widest mb-1.5 block">Lieu</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[{ v: true, l: '🏠 Domicile' }, { v: false, l: '✈️ Extérieur' }].map(o => (
+                          <button key={String(o.v)} onClick={() => setEditIsHome(o.v)}
+                            className={`py-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-colors ${
+                              editIsHome === o.v
+                                ? 'bg-jaune/15 border-jaune text-jaune'
+                                : 'bg-surface border-bord text-muted'}`}>
+                            {o.l}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-muted text-xs uppercase tracking-widest mb-1.5 block">Score</label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <input type="number" min="0" inputMode="numeric"
+                            className="w-full bg-surface border border-bord rounded-xl px-3 py-2.5 text-white outline-none focus:border-jaune text-sm text-center"
+                            value={editScoreFcsm}
+                            onChange={e => setEditScoreFcsm(e.target.value)}
+                            placeholder="0" />
+                          <div className="text-center text-jaune text-[0.6rem] font-bebas tracking-widest mt-1">FCSM</div>
+                        </div>
+                        <span className="text-muted font-bebas text-lg pb-5">–</span>
+                        <div className="flex-1">
+                          <input type="number" min="0" inputMode="numeric"
+                            className="w-full bg-surface border border-bord rounded-xl px-3 py-2.5 text-white outline-none focus:border-jaune text-sm text-center"
+                            value={editScoreOpp}
+                            onChange={e => setEditScoreOpp(e.target.value)}
+                            placeholder="0" />
+                          <div className="text-center text-muted text-[0.6rem] font-bebas tracking-widest mt-1 truncate">
+                            {editOpponent.trim() ? editOpponent.trim().toUpperCase() : 'ADVERSAIRE'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-muted text-xs uppercase tracking-widest mb-1.5 block">Date du match</label>
+                      <input type="date"
+                        className="w-full bg-surface border border-bord rounded-xl px-4 py-2.5 text-white outline-none focus:border-jaune text-sm"
+                        value={editMatchDate}
+                        onChange={e => setEditMatchDate(e.target.value)} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <motion.button onClick={handleSave} disabled={saving} whileTap={{ scale:0.97 }}
                 className="w-full py-4 bg-jaune text-bleu2 font-bebas text-xl tracking-widest rounded-2xl cursor-pointer disabled:opacity-50">
                 {saving ? 'SAUVEGARDE...' : 'ENREGISTRER'}
