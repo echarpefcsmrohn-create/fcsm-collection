@@ -1,7 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { getScarves, addScarf, updateScarf, deleteScarf } from '../lib/supabase'
 
-const CACHE_KEY = 'fcsm_collection_cache'
+// v2 : nouvelle clé pour purger les anciens caches qui contenaient les
+// embeddings (~2 Mo, proche de la limite localStorage de 5 Mo).
+const CACHE_KEY = 'fcsm_collection_cache_v2'
+const OLD_CACHE_KEYS = ['fcsm_collection_cache']
 const CollectionContext = createContext(null)
 
 export function CollectionProvider({ children }) {
@@ -14,6 +17,11 @@ export function CollectionProvider({ children }) {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  // Nettoyage des anciens caches devenus obsolètes
+  useEffect(() => {
+    OLD_CACHE_KEYS.forEach(k => { try { localStorage.removeItem(k) } catch {} })
+  }, [])
 
   const saveCache = (data) => {
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)) } catch {}

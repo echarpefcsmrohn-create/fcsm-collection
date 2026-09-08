@@ -1,9 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
-import { getEraLabel, getScarfNumber } from '../lib/eras'
+import { getEraLabel, getScarfNumber, getNumberMap } from '../lib/eras'
 import PageHeader from '../components/PageHeader'
 import { playTick, playWin, vibrate } from '../lib/sounds'
+import { cldUrl } from '../lib/cloudinary'
 
 const HISTORY_KEY = 'fcsm_daily_history'
 function loadHistory() {
@@ -32,6 +33,7 @@ function FortuneWheel({ collection, spinning, targetIndex, onSpinEnd }) {
     const cx = S / 2, cy = S / 2
     const R = S / 2 - 4
     const sliceAngle = (2 * Math.PI) / n
+    const numberMap = getNumberMap(collection)
 
     ctx.clearRect(0, 0, S, S)
 
@@ -52,7 +54,10 @@ function FortuneWheel({ collection, spinning, targetIndex, onSpinEnd }) {
       ctx.stroke()
 
       // Numéro
-      const num = String(i + 1).padStart(3, '0')
+      // Numéro réel de la collection (basé sur la date d'ajout), et non
+      // la position dans le tableau — sinon l'affichage se décale à chaque
+      // nouvel ajout.
+      const num = numberMap.get(String(collection[i]?.id)) ?? '???'
       const textR = R * 0.68
       const tx = cx + textR * Math.cos(midA)
       const ty = cy + textR * Math.sin(midA)
@@ -263,7 +268,7 @@ export default function DailyPage() {
               transition={{ type:'spring', damping:20, stiffness:300 }}>
               <div className="aspect-[3/2] bg-surface2 flex items-center justify-center overflow-hidden">
                 {winner.photo_url
-                  ? <img src={winner.photo_url} alt={winner.Name} className="w-full h-full object-contain" />
+                  ? <img src={cldUrl(winner.photo_url, 800)} alt={winner.Name} className="w-full h-full object-contain" />
                   : <span className="text-8xl opacity-10">🧣</span>}
               </div>
               <div className="text-center py-4 px-5 relative"
@@ -310,7 +315,7 @@ export default function DailyPage() {
                     initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0, x:-20 }}>
                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-surface2 flex-shrink-0">
                       {h.photo
-                        ? <img src={h.photo} alt="" className="w-full h-full object-cover" />
+                        ? <img src={cldUrl(h.photo, 120)} alt="" className="w-full h-full object-cover" />
                         : <div className="w-full h-full flex items-center justify-center text-lg">🧣</div>}
                     </div>
                     <div className="flex-1 min-w-0">

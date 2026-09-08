@@ -5,6 +5,7 @@ import { ERAS, getScarfNumber } from '../lib/eras'
 import PageHeader from '../components/PageHeader'
 import { checkVisualDuplicate } from '../lib/embeddings'
 import FreeCropper from '../components/FreeCropper'
+import { cldUrl } from '../lib/cloudinary'
 
 export default function VerifyPage() {
   const { collection } = useCollection()
@@ -242,7 +243,7 @@ export default function VerifyPage() {
                     )}
                     <div className="aspect-[4/3] flex items-center justify-center overflow-hidden">
                       {s.photo_url
-                        ? <img src={s.photo_url} alt={s.Name} className="w-full h-full object-cover" />
+                        ? <img src={cldUrl(s.photo_url, 300)} alt={s.Name} className="w-full h-full object-cover" />
                         : <span className="text-2xl">🧣</span>}
                     </div>
                     <div className="px-2 pt-1.5 text-[0.6rem] font-bebas text-jaune tracking-wide">

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { getEraLabel, getScarfNumber } from '../lib/eras'
 import { useCollection } from '../context/CollectionContext'
+import { cldUrl } from '../lib/cloudinary'
 
 export default function ScarfCard({ scarf, onClick }) {
   const { collection } = useCollection()
@@ -19,7 +20,7 @@ export default function ScarfCard({ scarf, onClick }) {
       <div className="aspect-[4/3] overflow-hidden flex items-center justify-center relative"
         style={{ background: 'linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #0a1628 100%)' }}>
         {photo
-          ? <img src={photo} alt={scarf.Name}
+          ? <img src={cldUrl(photo, 400)} alt={scarf.Name}
               className="w-full h-full"
               loading="lazy"
               style={{ objectFit: 'contain', padding: '4px', filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.6))' }} />

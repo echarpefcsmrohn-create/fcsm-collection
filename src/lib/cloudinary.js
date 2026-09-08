@@ -107,3 +107,19 @@ export async function removeBackground(file, onStatus) {
 
   throw new Error('Tous les crédits remove.bg sont épuisés')
 }
+
+/**
+ * Insère des transformations Cloudinary dans une URL existante.
+ * Cloudinary génère la variante à la volée et la met en cache : aucun
+ * ré-upload nécessaire, les photos d'origine restent intactes.
+ */
+export function cldUrl(url, width = 400, opts = {}) {
+  if (!url || typeof url !== 'string') return url
+  if (!url.includes('/upload/')) return url          // pas une URL Cloudinary
+  if (/\/upload\/[^/]*[wq]_\d/.test(url)) return url // déjà transformée
+
+  const crop = opts.fit === 'cover' ? 'c_fill' : 'c_limit'
+  // dpr_auto : 2x sur écrans haute densité · q_auto : qualité adaptée
+  // f_auto : WebP/AVIF selon le navigateur
+  return url.replace('/upload/', `/upload/${crop},w_${width},q_auto,f_auto,dpr_auto/`)
+}

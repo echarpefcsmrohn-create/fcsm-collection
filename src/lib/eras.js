@@ -19,8 +19,31 @@ export function getEraLabel(eraId) {
   return ERAS.find(e => e.id === eraId)?.label || eraId || '—'
 }
 
+// --- Numérotation ------------------------------------------------------
+// Logique INCHANGÉE : tri par added_at croissant, puis index + 1 sur
+// 3 chiffres. Le tri n'est plus refait par carte affichée mais une seule
+// fois par version de la collection.
+let _numCacheSource = null
+let _numCacheMap = null
+
+function buildNumberMap(collection) {
+  const sorted = [...collection].sort((a, b) => new Date(a.added_at) - new Date(b.added_at))
+  const map = new Map()
+  sorted.forEach((s, i) => map.set(String(s.id), String(i + 1).padStart(3, '0')))
+  return map
+}
+
+/** Map id -> numéro, recalculée seulement quand la collection change. */
+export function getNumberMap(collection) {
+  if (!collection) return new Map()
+  if (_numCacheSource !== collection) {
+    _numCacheSource = collection
+    _numCacheMap = buildNumberMap(collection)
+  }
+  return _numCacheMap
+}
+
 export function getScarfNumber(scarf, collection) {
-  const sorted = [...collection].sort((a,b) => new Date(a.added_at) - new Date(b.added_at))
-  const idx = sorted.findIndex(s => String(s.id) === String(scarf.id))
-  return idx === -1 ? '???' : String(idx + 1).padStart(3, '0')
+  if (!scarf || !collection) return '???'
+  return getNumberMap(collection).get(String(scarf.id)) ?? '???'
 }

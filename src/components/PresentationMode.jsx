@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getEraLabel, getScarfNumber } from '../lib/eras'
 import { useCollection } from '../context/CollectionContext'
+import { cldUrl } from '../lib/cloudinary'
 
 export default function PresentationMode({ scarves, onClose }) {
   const { collection } = useCollection()
@@ -39,7 +40,7 @@ export default function PresentationMode({ scarves, onClose }) {
             initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0, scale:0.95 }}
             transition={{ duration:0.25 }}>
             {scarf.photo_url
-              ? <img src={scarf.photo_url} alt={scarf.Name} className="max-w-full max-h-full object-contain"
+              ? <img src={cldUrl(scarf.photo_url, 1200)} alt={scarf.Name} className="max-w-full max-h-full object-contain"
                   style={{ filter:'drop-shadow(0 0 30px rgba(245,196,0,0.12))' }} />
               : <span className="text-9xl opacity-10">🧣</span>}
           </motion.div>
@@ -91,7 +92,7 @@ export default function PresentationMode({ scarves, onClose }) {
           <motion.div className="fixed inset-0 bg-black/95 z-[500] flex items-center justify-center p-4"
             onClick={() => setLightbox(false)}
             initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}>
-            <img src={scarf.photo_url} alt="" className="max-w-full max-h-full object-contain" />
+            <img src={cldUrl(scarf.photo_url, 1200)} alt="" className="max-w-full max-h-full object-contain" />
             <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center cursor-pointer">✕</button>
           </motion.div>
         )}

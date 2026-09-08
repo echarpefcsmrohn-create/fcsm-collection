@@ -5,6 +5,7 @@ import { getEraLabel, getScarfNumber, ERAS } from '../lib/eras'
 import { uploadToCloudinary, removeBackground } from '../lib/cloudinary'
 import { playDelete, vibrate } from '../lib/sounds'
 import PhotoViewer from './PhotoViewer'
+import { cldUrl } from '../lib/cloudinary'
 
 export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
   const { collection, update, remove } = useCollection()
@@ -112,7 +113,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
           onClick={() => !editing && currentPhoto && setLightbox(true)}>
 
           {currentPhoto
-            ? <motion.img key={currentPhoto} src={currentPhoto} alt={currentScarf.Name}
+            ? <motion.img key={currentPhoto} src={cldUrl(currentPhoto, 1000)} alt={currentScarf.Name}
                 className="absolute inset-0 w-full h-full object-contain p-6"
                 style={{ filter:'drop-shadow(0 8px 32px rgba(0,0,0,0.8))' }}
                 initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }}
