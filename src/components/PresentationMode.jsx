@@ -25,7 +25,7 @@ export default function PresentationMode({ scarves, onClose }) {
       {/* Header */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
         <motion.button onClick={onClose} whileTap={{ scale:0.9 }}
-          className="w-10 h-10 rounded-full bg-white/8 border border-white/15 text-white flex items-center justify-center cursor-pointer">
+          className="w-10 h-10 border-[3px] border-creme bg-transparent text-white flex items-center justify-center cursor-pointer">
           ✕
         </motion.button>
         <div className="font-bebas text-argent/50 tracking-widest text-sm">{idx+1} / {total}</div>
@@ -41,7 +41,7 @@ export default function PresentationMode({ scarves, onClose }) {
             transition={{ duration:0.25 }}>
             {scarf.photo_url
               ? <img src={cldUrl(scarf.photo_url, 1200)} alt={scarf.Name} className="max-w-full max-h-full object-contain"
-                  style={{ filter:'drop-shadow(0 0 30px rgba(245,196,0,0.12))' }} />
+                  style={{ filter:'drop-shadow(0 0 30px rgba(255,200,0,0.12))' }} />
               : <span className="text-9xl opacity-10">🧣</span>}
           </motion.div>
         </AnimatePresence>
@@ -50,20 +50,14 @@ export default function PresentationMode({ scarves, onClose }) {
       {/* Plaque dorée */}
       <AnimatePresence mode="wait">
         <motion.div key={idx}
-          className="mx-5 mb-4 rounded-sm text-center py-3 px-5 relative"
-          style={{
-            background: 'linear-gradient(135deg, #2a1f00, #3d2d00, #2a1f00)',
-            border: '1px solid rgba(245,196,0,0.5)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(245,196,0,0.2)'
-          }}
+          className="mx-5 mb-4 text-center py-3 px-5 bg-jaune border-[3px] border-creme"
           initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}>
-          <div className="absolute inset-[3px] border border-jaune/20 rounded-sm pointer-events-none" />
-          <div className="text-jaune/60 text-[0.6rem] tracking-[3px] font-bebas mb-1">
-            #{getScarfNumber(scarf, collection)}
+          <div className="inline-block bg-noir text-jaune font-bebas text-2xl leading-none px-2.5 py-0.5 mb-1.5" style={{ transform:'rotate(-3deg)' }}>
+            {getScarfNumber(scarf, collection)}
           </div>
-          <div className="font-bebas text-xl tracking-[3px] text-jaune leading-tight">{scarf.Name}</div>
+          <div className="titre-retro text-2xl text-noir leading-none" style={{ transformOrigin:'center' }}>{scarf.Name}</div>
           {scarf.era && (
-            <div className="text-jaune/70 text-[0.65rem] tracking-[2px] mt-1">⊞ {getEraLabel(scarf.era)}</div>
+            <div className="label-retro text-noir/80 text-[0.6rem] mt-1.5">{getEraLabel(scarf.era)}</div>
           )}
         </motion.div>
       </AnimatePresence>
@@ -71,7 +65,7 @@ export default function PresentationMode({ scarves, onClose }) {
       {/* Nav */}
       <div className="flex items-center justify-between px-6 pb-8 pt-2">
         <motion.button onClick={() => go(-1)} disabled={idx===0} whileTap={{ scale:0.9 }}
-          className="w-12 h-12 rounded-full border border-jaune/30 bg-jaune/5 text-jaune text-xl flex items-center justify-center cursor-pointer disabled:opacity-15">
+          className="w-12 h-12 border-[3px] border-jaune bg-transparent text-jaune text-xl flex items-center justify-center cursor-pointer disabled:opacity-15">
           ←
         </motion.button>
         <div className="flex gap-1.5 flex-wrap justify-center max-w-[160px]">
@@ -81,7 +75,7 @@ export default function PresentationMode({ scarves, onClose }) {
           {total > 9 && <span className="text-jaune/30 text-[0.6rem]">+{total-9}</span>}
         </div>
         <motion.button onClick={() => go(1)} disabled={idx===total-1} whileTap={{ scale:0.9 }}
-          className="w-12 h-12 rounded-full border border-jaune/30 bg-jaune/5 text-jaune text-xl flex items-center justify-center cursor-pointer disabled:opacity-15">
+          className="w-12 h-12 border-[3px] border-jaune bg-transparent text-jaune text-xl flex items-center justify-center cursor-pointer disabled:opacity-15">
           →
         </motion.button>
       </div>
@@ -93,7 +87,7 @@ export default function PresentationMode({ scarves, onClose }) {
             onClick={() => setLightbox(false)}
             initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}>
             <img src={cldUrl(scarf.photo_url, 1200)} alt="" className="max-w-full max-h-full object-contain" />
-            <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center cursor-pointer">✕</button>
+            <button className="absolute top-4 right-4 w-10 h-10 border-[3px] border-creme bg-transparent text-white flex items-center justify-center cursor-pointer">✕</button>
           </motion.div>
         )}
       </AnimatePresence>

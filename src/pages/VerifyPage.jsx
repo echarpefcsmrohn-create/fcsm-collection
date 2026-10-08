@@ -116,7 +116,7 @@ export default function VerifyPage() {
         <div className="grid grid-cols-2 gap-2">
           {[{ id:'manuel', label:'🏷️ PAR ÈRE' }, { id:'ia', label:'🧬 PAR IMAGE' }].map(m => (
             <motion.button key={m.id} whileTap={{ scale:0.95 }}
-              className={`py-3 rounded-2xl font-bebas text-base tracking-widest border cursor-pointer transition-colors ${mode === m.id ? 'bg-jaune/12 border-jaune text-jaune' : 'bg-surface2 border-bord text-muted'}`}
+              className={`py-3 font-bebas text-base tracking-widest border cursor-pointer transition-colors ${mode === m.id ? 'bg-jaune/12 border-jaune text-jaune' : 'bg-surface2 border-bord text-muted'}`}
               onClick={() => { setMode(m.id); reset() }}>
               {m.label}
             </motion.button>
@@ -125,9 +125,9 @@ export default function VerifyPage() {
 
         {/* MODE MANUEL */}
         {mode === 'manuel' && (
-          <div className="bg-surface border border-bord rounded-2xl p-5">
+          <div className="bg-surface border-[3px] border-creme p-5">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 rounded-full bg-jaune flex items-center justify-center text-bleu2 text-xs font-black">1</div>
+              <div className="w-7 h-7 bg-jaune flex items-center justify-center text-noir text-sm font-black">1</div>
               <div className="font-bebas text-sm tracking-widest text-jaune">IDENTIFIE LE LOGO SUR L'ÉCHARPE</div>
             </div>
             <div className="grid grid-cols-3 gap-2">
@@ -146,13 +146,13 @@ export default function VerifyPage() {
         {/* MODE IMAGE */}
         {mode === 'ia' && (
           <div className="flex flex-col gap-3">
-            <div className="bg-surface border border-bord rounded-2xl p-5">
+            <div className="bg-surface border-[3px] border-creme p-5">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-full bg-jaune flex items-center justify-center text-bleu2 text-xs font-black">1</div>
+                <div className="w-7 h-7 bg-jaune flex items-center justify-center text-noir text-sm font-black">1</div>
                 <div className="font-bebas text-sm tracking-widest text-jaune">PRENDS UNE PHOTO DE L'ÉCHARPE</div>
               </div>
 
-              <div className="aspect-video bg-surface2 border-2 border-dashed border-bord rounded-2xl overflow-hidden relative flex flex-col items-center justify-center gap-2 cursor-pointer mb-3"
+              <div className="aspect-video bg-surface2 border-2 border-dashed border-bord overflow-hidden relative flex flex-col items-center justify-center gap-2 cursor-pointer mb-3"
                 onClick={() => iaFileRef.current?.click()}>
                 {iaPhoto
                   ? <img src={iaPhoto} alt="" className="absolute inset-0 w-full h-full object-cover" />
@@ -165,11 +165,11 @@ export default function VerifyPage() {
 
               <div className="grid grid-cols-2 gap-2">
                 <button onClick={() => iaCameraRef.current?.click()}
-                  className="py-2.5 rounded-xl border border-bord bg-surface2 text-sm text-white flex items-center justify-center gap-2 cursor-pointer active:border-jaune">
+                  className="py-2.5 border-[3px] border-creme bg-surface2 text-sm text-white flex items-center justify-center gap-2 cursor-pointer active:border-jaune">
                   📷 Caméra
                 </button>
                 <button onClick={() => iaFileRef.current?.click()}
-                  className="py-2.5 rounded-xl border border-bord bg-surface2 text-sm text-white flex items-center justify-center gap-2 cursor-pointer active:border-jaune">
+                  className="py-2.5 border-[3px] border-creme bg-surface2 text-sm text-white flex items-center justify-center gap-2 cursor-pointer active:border-jaune">
                   🖼️ Galerie
                 </button>
               </div>
@@ -181,14 +181,14 @@ export default function VerifyPage() {
 
             {iaPhoto && !analyzing && !result && (
               <motion.button onClick={analyzeVisual} whileTap={{ scale:0.97 }}
-                className="w-full py-4 bg-jaune text-bleu2 font-bebas text-xl tracking-widest rounded-2xl cursor-pointer"
-                style={{ boxShadow:'0 4px 20px rgba(245,196,0,0.3)' }}>
+                className="w-full py-4 bg-jaune text-bleu2 font-bebas text-xl tracking-widest cursor-pointer"
+                style={{ boxShadow:'0 4px 20px rgba(255,200,0,0.3)' }}>
                 🧬 COMPARER VISUELLEMENT
               </motion.button>
             )}
 
             {analyzing && (
-              <div className="bg-surface border border-bord rounded-2xl p-5 text-center">
+              <div className="bg-surface border-[3px] border-creme p-5 text-center">
                 <div className="text-2xl mb-2">🧬</div>
                 <div className="font-bebas text-lg tracking-widest text-jaune mb-1">ANALYSE VISUELLE</div>
                 <div className="text-muted text-xs mb-4">{analyzeStep}</div>
@@ -201,7 +201,7 @@ export default function VerifyPage() {
             )}
 
             {!analyzing && analyzeStep.startsWith('❌') && (
-              <div className="bg-red-500/10 border border-red-500/40 rounded-2xl p-3 text-center">
+              <div className="bg-red-500/10 border border-red-500/40 p-3 text-center">
                 <div className="text-red-400 text-xs">{analyzeStep}</div>
               </div>
             )}
@@ -230,7 +230,7 @@ export default function VerifyPage() {
             {result.matches?.length > 0 && (
               <div className="grid grid-cols-2 gap-2">
                 {result.matches.map(s => (
-                  <div key={s.id} className="bg-surface2 rounded-xl overflow-hidden border border-bord relative">
+                  <div key={s.id} className="bg-surface2 overflow-hidden border-[3px] border-creme relative">
                     {/* Badge % de similarité (mode image seulement) */}
                     {s.similarity != null && (
                       <div className="absolute top-1.5 right-1.5 z-10 bg-noir/85 rounded-full px-2 py-0.5">
@@ -261,7 +261,7 @@ export default function VerifyPage() {
 
         {result && (
           <motion.button whileTap={{ scale:0.97 }} onClick={reset}
-            className="w-full py-3 bg-surface2 border border-bord text-white font-bebas tracking-widest rounded-2xl cursor-pointer">
+            className="w-full py-3 bg-surface2 border-[3px] border-creme text-white font-bebas tracking-widest cursor-pointer">
             🔄 VÉRIFIER UNE AUTRE ÉCHARPE
           </motion.button>
         )}

@@ -4,7 +4,7 @@ import { useCollection } from '../context/CollectionContext'
 import { ERAS, normalizeEra } from '../lib/eras'
 import PageHeader from '../components/PageHeader'
 import { useAnimatedNumber } from '../hooks/useAnimatedNumber'
-import { getMatchStats, RESULTS } from '../lib/match'
+import { getMatchStats, RESULTS, RETRO_BADGE } from '../lib/match'
 
 function StatTile({ icon, label, value, delay = 0, highlight = false }) {
   const num = typeof value === 'number' ? value : null
@@ -12,7 +12,7 @@ function StatTile({ icon, label, value, delay = 0, highlight = false }) {
 
   return (
     <motion.div
-      className={`bg-surface border rounded-2xl p-5 relative overflow-hidden ${highlight ? 'border-jaune' : 'border-bord'}`}
+      className={`bg-surface border p-5 relative overflow-hidden ${highlight ? 'border-jaune' : 'border-bord'}`}
       initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
       transition={{ delay, duration:0.4 }}>
       {highlight && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-jaune" />}
@@ -20,12 +20,12 @@ function StatTile({ icon, label, value, delay = 0, highlight = false }) {
       <div className={`font-bebas text-4xl leading-none ${highlight ? 'text-jaune' : 'text-white'}`}>
         {num !== null ? animated : value}
       </div>
-      <div className="text-muted text-xs uppercase tracking-widest mt-1">{label}</div>
+      <div className="label-retro text-argent/70 text-[0.62rem] mt-1">{label}</div>
     </motion.div>
   )
 }
 
-function AnimatedBar({ value, max, color = '#F5C400', delay = 0 }) {
+function AnimatedBar({ value, max, color = '#FFC800', delay = 0 }) {
   const [width, setWidth] = useState(0)
   useEffect(() => {
     const t = setTimeout(() => setWidth(Math.round(value / max * 100)), delay * 1000 + 300)
@@ -82,7 +82,7 @@ export default function StatsPage() {
   const maxMois = Math.max(...moisSorted.map(([,n]) => n), 1)
 
   // Pie chart
-  const colors = ['#F5C400','#E5A800','#D49000','#C47800','#B46000','#A44800','#943000','#842000','#741000']
+  const colors = ['#FFC800','#F4EFE0','#2B3F9A','#D6362B','#2E9E57','#A9B6E8','#D9A800','#6B7280','#16307F']
   let cumAngle = 0
   const slices = erasSorted.map((e, i) => {
     const pct = (parEra[e.id] || 0) / total
@@ -117,19 +117,19 @@ export default function StatsPage() {
 
         {/* Bilan des matchs */}
         {matchStats.total > 0 && (
-          <motion.div className="bg-surface border border-bord rounded-2xl p-5"
+          <motion.div className="bg-surface border-[3px] border-creme p-5"
             initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.35 }}>
             <div className="flex items-center justify-between mb-4">
-              <div className="text-muted text-xs uppercase tracking-widest">⚔️ Bilan des matchs</div>
+              <div className="label-retro text-argent/70 text-[0.62rem]">⚔️ Bilan des matchs</div>
               <div className="text-jaune font-bebas text-sm">{matchStats.total} écharpe{matchStats.total > 1 ? 's' : ''}</div>
             </div>
 
             {/* Barre V / N / D */}
-            <div className="flex rounded-xl overflow-hidden h-9 mb-3">
+            <div className="flex overflow-hidden h-9 mb-3">
               {['win','draw','loss'].map(k => matchStats[k] > 0 && (
                 <motion.div key={k}
                   className="flex items-center justify-center text-xs font-bold"
-                  style={{ background: RESULTS[k].color, color: k === 'draw' ? '#0a1628' : '#fff' }}
+                  style={{ background: RETRO_BADGE[k].bg, color: RETRO_BADGE[k].color }}
                   initial={{ width: 0 }}
                   animate={{ width: `${(matchStats[k] / matchStats.total) * 100}%` }}
                   transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}>
@@ -140,12 +140,12 @@ export default function StatsPage() {
 
             <div className="grid grid-cols-3 gap-2 mb-4">
               {[['win','Victoires'],['draw','Nuls'],['loss','Défaites']].map(([k,label]) => (
-                <div key={k} className="text-center rounded-xl py-2"
-                  style={{ background: RESULTS[k].bg, border: `1px solid ${RESULTS[k].border}` }}>
-                  <div className="font-bebas text-2xl leading-none" style={{ color: RESULTS[k].color }}>
+                <div key={k} className="text-center py-2"
+                  style={{ background: RETRO_BADGE[k].bg, border: '3px solid #F4EFE0' }}>
+                  <div className="font-bebas text-3xl leading-none match-bloc">
                     {matchStats[k]}
                   </div>
-                  <div className="text-muted text-[0.6rem] uppercase tracking-widest mt-1">{label}</div>
+                  <div className="label-retro text-[0.55rem] mt-1 match-bloc">{label}</div>
                 </div>
               ))}
             </div>
@@ -171,13 +171,13 @@ export default function StatsPage() {
         )}
 
         {/* Photos bar */}
-        <motion.div className="bg-surface border border-bord rounded-2xl p-5"
+        <motion.div className="bg-surface border-[3px] border-creme p-5"
           initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.4 }}>
           <div className="flex items-center justify-between mb-3">
-            <div className="text-muted text-xs uppercase tracking-widest">📸 Photos</div>
+            <div className="label-retro text-argent/70 text-[0.62rem]">📸 Photos</div>
             <div className="text-jaune font-bebas text-sm">{Math.round(avecPhoto/total*100)}%</div>
           </div>
-          <div className="flex rounded-xl overflow-hidden h-8 mb-2">
+          <div className="flex overflow-hidden h-8 mb-2">
             <motion.div
               className="bg-jaune flex items-center justify-center text-bleu2 text-xs font-bold"
               initial={{ width: 0 }}
@@ -193,15 +193,15 @@ export default function StatsPage() {
 
         {/* Pie chart */}
         {slices.length > 1 && (
-          <motion.div className="bg-surface border border-bord rounded-2xl p-5"
+          <motion.div className="bg-surface border-[3px] border-creme p-5"
             initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.5 }}>
-            <div className="text-muted text-xs uppercase tracking-widest mb-4">🏷 Par ère</div>
+            <div className="label-retro text-argent/70 text-[0.62rem] mb-4">🏷 Par ère</div>
             <div className="flex items-center gap-4">
               <motion.svg width="120" height="120" viewBox="0 0 120 120" className="flex-shrink-0"
                 initial={{ rotate: -90, opacity:0 }} animate={{ rotate: 0, opacity:1 }}
                 transition={{ duration: 0.8, delay: 0.6 }}>
                 {slices.map((s, i) => (
-                  <motion.path key={i} d={s.path} fill={s.color} stroke="#080C1A" strokeWidth="1.5"
+                  <motion.path key={i} d={s.path} fill={s.color} stroke="#0B1B5A" strokeWidth="2"
                     initial={{ opacity:0 }} animate={{ opacity:1 }}
                     transition={{ delay: 0.6 + i * 0.05 }} />
                 ))}
@@ -211,7 +211,7 @@ export default function StatsPage() {
                   <motion.div key={i} className="flex items-center gap-2"
                     initial={{ opacity:0, x:10 }} animate={{ opacity:1, x:0 }}
                     transition={{ delay: 0.7 + i * 0.06 }}>
-                    <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: s.color }} />
+                    <div className="w-2.5 h-2.5 flex-shrink-0" style={{ background: s.color }} />
                     <span className="text-muted text-xs flex-1">{s.era.label}</span>
                     <span className="text-jaune font-bold text-xs">{s.count}</span>
                   </motion.div>
@@ -223,9 +223,9 @@ export default function StatsPage() {
 
         {/* Era bars */}
         {erasSorted.length > 0 && (
-          <motion.div className="bg-surface border border-bord rounded-2xl p-5"
+          <motion.div className="bg-surface border-[3px] border-creme p-5"
             initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.6 }}>
-            <div className="text-muted text-xs uppercase tracking-widest mb-4">📊 Détail par ère</div>
+            <div className="label-retro text-argent/70 text-[0.62rem] mb-4">📊 Détail par ère</div>
             <div className="flex flex-col gap-3">
               {erasSorted.map((e, i) => (
                 <div key={e.id}>
@@ -243,9 +243,9 @@ export default function StatsPage() {
 
         {/* Monthly chart */}
         {moisSorted.length > 1 && (
-          <motion.div className="bg-surface border border-bord rounded-2xl p-5"
+          <motion.div className="bg-surface border-[3px] border-creme p-5"
             initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.7 }}>
-            <div className="text-muted text-xs uppercase tracking-widest mb-4">📈 Ajouts par mois</div>
+            <div className="label-retro text-argent/70 text-[0.62rem] mb-4">📈 Ajouts par mois</div>
             <div className="flex items-end gap-1.5 h-24">
               {moisSorted.map(([mois, n], i) => (
                 <div key={mois} className="flex-1 flex flex-col items-center gap-1">

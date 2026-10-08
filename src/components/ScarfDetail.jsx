@@ -5,6 +5,7 @@ import { getEraLabel, getScarfNumber, ERAS } from '../lib/eras'
 import { uploadToCloudinary, removeBackground } from '../lib/cloudinary'
 import { playDelete, vibrate } from '../lib/sounds'
 import PhotoViewer from './PhotoViewer'
+import EraLogo from './EraLogo'
 import { cldUrl } from '../lib/cloudinary'
 import { getResult, RETRO_BADGE, formatScore, formatFixture, formatMatchDate, RESULTS } from '../lib/match'
 
@@ -256,7 +257,8 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
                 <div className="grid grid-cols-3 gap-2">
                   {ERAS.map(e => (
                     <button key={e.id} onClick={() => setEditEra(e.id)}
-                      className={`py-2 border text-xs font-semibold cursor-pointer transition-colors ${editEra === e.id ? 'bg-jaune/15 border-jaune text-jaune' : 'bg-surface2 border-bord text-muted'}`}>
+                      className={`py-2 min-h-[72px] flex flex-col items-center justify-center gap-1 border-[3px] label-retro text-[0.55rem] cursor-pointer transition-colors ${editEra === e.id ? 'bg-jaune border-jaune text-noir' : 'bg-surface border-creme text-argent'}`}>
+                      <EraLogo id={e.id} size={32} />
                       {e.label}
                     </button>
                   ))}

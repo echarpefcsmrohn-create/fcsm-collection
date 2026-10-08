@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
 import { ERAS } from '../lib/eras'
+import EraLogo from './EraLogo'
 import { uploadToCloudinary, removeBackground, compressImage, getRemoveBgCredits } from '../lib/cloudinary'
 import { getImageEmbedding, findSimilarScarves } from '../lib/embeddings'
 import { playAdd, vibrate } from '../lib/sounds'
@@ -11,7 +12,7 @@ const PROXY_URL = 'https://fcsm-ai-proxy.echarpe-fcsm-rohn.workers.dev/'
 function getAnthropicKey() { return localStorage.getItem('fcsm_anthropic_key') || '' }
 
 function launchConfetti() {
-  const colors = ['#F5C400', '#D4A900', '#003087', '#ffffff']
+  const colors = ['#FFC800', '#D9A800', '#003087', '#ffffff']
   confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 }, colors })
   setTimeout(() => confetti({ particleCount: 40, spread: 50, origin: { y: 0.5 }, colors }), 200)
 }
@@ -192,7 +193,7 @@ export default function AddModal({ open, onClose }) {
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-[200] flex items-end justify-center"
-          style={{ background: 'rgba(0,5,20,0.9)' }}
+          style={{ background: 'rgba(6,16,58,0.92)' }}
           onClick={e => e.target === e.currentTarget && handleClose()}>
           <motion.div
             className="bg-surface border-t-2 border-jaune w-full max-w-[480px] rounded-t-3xl max-h-[92vh] overflow-y-auto"
@@ -202,14 +203,14 @@ export default function AddModal({ open, onClose }) {
             <div className="w-10 h-1 bg-bord rounded-full mx-auto mt-3" />
             <div className="flex items-center justify-between px-5 py-4 border-b border-bord">
               <div className="font-bebas text-2xl tracking-widest text-jaune">NOUVELLE ÉCHARPE</div>
-              <button onClick={handleClose} className="w-8 h-8 rounded-full bg-surface2 border border-bord text-white flex items-center justify-center cursor-pointer">✕</button>
+              <button onClick={handleClose} className="w-9 h-9 bg-surface border-[3px] border-creme text-white flex items-center justify-center cursor-pointer">✕</button>
             </div>
 
             <div className="p-5 flex flex-col gap-5">
               {/* Photo zone */}
               <div>
-                <div className="text-muted text-xs uppercase tracking-widest mb-2">Photo</div>
-                <div className="aspect-video bg-surface2 border-2 border-dashed border-bord rounded-2xl overflow-hidden relative flex flex-col items-center justify-center gap-2 cursor-pointer"
+                <div className="label-retro text-argent/70 text-[0.62rem] mb-2">Photo</div>
+                <div className="aspect-video bg-surface2 border-2 border-dashed border-bord overflow-hidden relative flex flex-col items-center justify-center gap-2 cursor-pointer"
                   onClick={() => fileRef.current?.click()}>
                   {preview
                     ? <img src={preview} alt="" className="absolute inset-0 w-full h-full object-contain" />
@@ -221,18 +222,18 @@ export default function AddModal({ open, onClose }) {
                     </div>
                   )}
                   {!processing && !saving && step && (
-                    <div className="absolute bottom-2 left-2 right-2 bg-noir/80 rounded-lg px-3 py-1.5 text-center">
+                    <div className="absolute bottom-2 left-2 right-2 bg-noir/80 px-3 py-1.5 text-center">
                       <span className="text-jaune text-xs">{step}</span>
                     </div>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   <button onClick={() => cameraRef.current?.click()}
-                    className="py-2.5 rounded-xl border border-bord bg-surface2 text-sm text-white flex items-center justify-center gap-2 cursor-pointer active:border-jaune transition-colors">
+                    className="py-2.5 border-[3px] border-creme bg-surface2 text-sm text-white flex items-center justify-center gap-2 cursor-pointer active:border-jaune transition-colors">
                     📷 Caméra
                   </button>
                   <button onClick={() => fileRef.current?.click()}
-                    className="py-2.5 rounded-xl border border-bord bg-surface2 text-sm text-white flex items-center justify-center gap-2 cursor-pointer active:border-jaune transition-colors">
+                    className="py-2.5 border-[3px] border-creme bg-surface2 text-sm text-white flex items-center justify-center gap-2 cursor-pointer active:border-jaune transition-colors">
                     🖼️ Galerie
                   </button>
                 </div>
@@ -245,16 +246,16 @@ export default function AddModal({ open, onClose }) {
                 <div className="mt-2">
                   {!credits && (
                     <button onClick={fetchCredits} disabled={loadingCredits}
-                      className="w-full py-2 rounded-xl border border-bord bg-surface2 text-muted text-xs flex items-center justify-center gap-2 cursor-pointer active:border-jaune transition-colors disabled:opacity-50">
+                      className="w-full py-2 border-[3px] border-creme bg-surface2 text-muted text-xs flex items-center justify-center gap-2 cursor-pointer active:border-jaune transition-colors disabled:opacity-50">
                       {loadingCredits
-                        ? <><div className="w-3 h-3 border border-bord border-t-jaune rounded-full animate-spin-slow" /> Chargement crédits...</>
+                        ? <><div className="w-3 h-3 border-[3px] border-creme border-t-jaune rounded-full animate-spin-slow" /> Chargement crédits...</>
                         : <>🔑 Voir crédits remove.bg</>}
                     </button>
                   )}
                   {credits && (
-                    <div className="bg-surface2 border border-bord rounded-xl px-3 py-2">
+                    <div className="bg-surface2 border-[3px] border-creme px-3 py-2">
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-muted text-xs uppercase tracking-widest">Crédits remove.bg</span>
+                        <span className="label-retro text-argent/70 text-[0.62rem]">Crédits remove.bg</span>
                         <button onClick={fetchCredits} disabled={loadingCredits} className="text-jaune text-xs cursor-pointer">
                           {loadingCredits ? '...' : '↻'}
                         </button>
@@ -267,7 +268,7 @@ export default function AddModal({ open, onClose }) {
                               <div className="h-full rounded-full transition-all"
                                 style={{
                                   width: `${Math.min((c.credits / 50) * 100, 100)}%`,
-                                  background: c.credits > 20 ? '#F5C400' : c.credits > 5 ? '#f97316' : '#ef4444'
+                                  background: c.credits > 20 ? '#FFC800' : c.credits > 5 ? '#f97316' : '#ef4444'
                                 }} />
                             </div>
                             <span className={`text-xs font-semibold w-8 text-right ${c.credits > 20 ? 'text-jaune' : c.credits > 5 ? 'text-orange-400' : 'text-red-400'}`}>
@@ -285,13 +286,13 @@ export default function AddModal({ open, onClose }) {
 
                 {/* Doublon check */}
                 {checkingDoublon && (
-                  <div className="flex items-center gap-2 mt-2 bg-jaune/6 border border-jaune/20 rounded-xl px-3 py-2">
+                  <div className="flex items-center gap-2 mt-2 bg-jaune/6 border border-jaune/20 px-3 py-2">
                     <div className="w-4 h-4 border-2 border-jaune/30 border-t-jaune rounded-full animate-spin-slow flex-shrink-0" />
                     <span className="text-muted text-xs">🧬 Comparaison visuelle en cours...</span>
                   </div>
                 )}
                 {doublonAlert && (
-                  <motion.div className="mt-2 bg-red-500/8 border border-red-500/50 rounded-xl p-3"
+                  <motion.div className="mt-2 bg-red-500/8 border border-red-500/50 p-3"
                     initial={{ opacity:0, y:-5 }} animate={{ opacity:1, y:0 }}>
                     <div className="flex items-start gap-2 mb-2">
                       <span className="text-xl">⚠️</span>
@@ -302,7 +303,7 @@ export default function AddModal({ open, onClose }) {
                     </div>
                     <div className="grid grid-cols-3 gap-1.5">
                       {doublonAlert.matches.slice(0,3).map(s => (
-                        <div key={s.id} className="bg-surface2 rounded-lg overflow-hidden border border-red-500/30">
+                        <div key={s.id} className="bg-surface2 overflow-hidden border border-red-500/30">
                           <div className="aspect-square overflow-hidden">
                             {s.photo_url
                               ? <img src={s.photo_url} alt="" className="w-full h-full object-cover" />
@@ -319,20 +320,21 @@ export default function AddModal({ open, onClose }) {
 
               {/* Nom */}
               <div>
-                <div className="text-muted text-xs uppercase tracking-widest mb-2">Nom / Description</div>
-                <input className="w-full bg-surface2 border border-bord rounded-xl px-4 py-3 text-white outline-none focus:border-jaune transition-colors text-sm"
+                <div className="label-retro text-argent/70 text-[0.62rem] mb-2">Nom / Description</div>
+                <input className="w-full bg-surface2 border-[3px] border-creme px-4 py-3 text-white outline-none focus:border-jaune transition-colors text-sm"
                   placeholder="ex : Finale Coupe de France 2007"
                   value={name} onChange={e => setName(e.target.value)} />
               </div>
 
               {/* Ère */}
               <div>
-                <div className="text-muted text-xs uppercase tracking-widest mb-2">Ère du logo</div>
+                <div className="label-retro text-argent/70 text-[0.62rem] mb-2">Ère du logo</div>
                 <div className="grid grid-cols-3 gap-2">
                   {ERAS.map(e => (
                     <motion.button key={e.id} whileTap={{ scale:0.93 }}
-                      className={`py-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-colors ${era === e.id ? 'bg-jaune/15 border-jaune text-jaune' : 'bg-surface2 border-bord text-muted'}`}
+                      className={`py-2 min-h-[72px] flex flex-col items-center justify-center gap-1 border-[3px] label-retro text-[0.55rem] cursor-pointer transition-colors ${era === e.id ? 'bg-jaune border-jaune text-noir' : 'bg-surface border-creme text-argent'}`}
                       onClick={() => setEra(era === e.id ? null : e.id)}>
+                      <EraLogo id={e.id} size={32} />
                       {e.label}
                     </motion.button>
                   ))}
@@ -341,10 +343,10 @@ export default function AddModal({ open, onClose }) {
 
               {/* Prix */}
               <div>
-                <div className="text-muted text-xs uppercase tracking-widest mb-2">Prix payé (optionnel)</div>
+                <div className="label-retro text-argent/70 text-[0.62rem] mb-2">Prix payé (optionnel)</div>
                 <div className="relative">
                   <input type="number" min="0" step="0.01"
-                    className="w-full bg-surface2 border border-bord rounded-xl px-4 py-3 text-white outline-none focus:border-jaune transition-colors pr-10 text-sm"
+                    className="w-full bg-surface2 border-[3px] border-creme px-4 py-3 text-white outline-none focus:border-jaune transition-colors pr-10 text-sm"
                     placeholder="ex : 15"
                     value={price} onChange={e => setPrice(e.target.value)} />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted text-sm">€</span>
@@ -356,7 +358,7 @@ export default function AddModal({ open, onClose }) {
                 onClick={handleSave}
                 disabled={saving || !name.trim() || processing}
                 whileTap={{ scale:0.97 }}
-                className="w-full py-4 bg-jaune text-bleu2 font-bebas text-xl tracking-widest rounded-2xl cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-opacity">
+                className="w-full py-4 bg-jaune text-bleu2 font-bebas text-xl tracking-widest cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-opacity">
                 {saving ? 'SAUVEGARDE...' : 'AJOUTER À MA COLLECTION'}
               </motion.button>
             </div>
