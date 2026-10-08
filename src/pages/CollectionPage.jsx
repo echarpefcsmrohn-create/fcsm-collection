@@ -7,6 +7,7 @@ import PageHeader from '../components/PageHeader'
 import { ERAS, ERA_ORDER, normalizeEra } from '../lib/eras'
 import ScarfDetail from '../components/ScarfDetail'
 import PresentationMode from '../components/PresentationMode'
+import EraLogo from '../components/EraLogo'
 
 const SORTS = [
   { id:'date-desc', label:'Récent' },
@@ -69,10 +70,11 @@ export default function CollectionPage() {
       <div className="flex gap-2 px-4 pt-2 pb-1 overflow-x-auto no-scrollbar">
         {[{ id:'all', label:'Toutes' }, ...ERAS].map(era => (
           <motion.button key={era.id}
-            className={`flex-shrink-0 px-3 py-1.5 label-retro text-[0.62rem] border-2 transition-colors cursor-pointer ${filterEra === era.id ? 'bg-jaune text-noir border-jaune' : 'bg-transparent text-argent border-creme'}`}
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 label-retro text-[0.62rem] border-2 transition-colors cursor-pointer ${filterEra === era.id ? 'bg-jaune text-noir border-jaune' : 'bg-transparent text-argent border-creme'}`}
             onClick={() => setFilterEra(era.id)}
             whileTap={{ scale: 0.95 }}
           >
+            <EraLogo id={era.id} size={18} />
             {era.label}
           </motion.button>
         ))}

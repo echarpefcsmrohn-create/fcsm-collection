@@ -1,8 +1,9 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
 import { getEraLabel, getScarfNumber, getNumberMap } from '../lib/eras'
 import PageHeader from '../components/PageHeader'
+import EraLogo from '../components/EraLogo'
 import { playTick, playWin, vibrate } from '../lib/sounds'
 import { cldUrl } from '../lib/cloudinary'
 
@@ -14,170 +15,106 @@ function saveHistory(h) {
   try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)) } catch {}
 }
 
-const COLORS = [
-  '#0a1830', '#1a2d5a', '#0f1e3d', '#152244',
-  '#1c2f5c', '#091528', '#112040', '#0d1b38'
+// ───────────────────────── Machine à sous ─────────────────────────
+// Trois rouleaux (photo, numéro, ère) qui s'arrêtent l'un après l'autre sur
+// l'écharpe tirée. Le gagnant est choisi AVANT l'animation (targetIndex) : le
+// dernier élément de chaque rouleau est toujours cette écharpe, donc le
+// résultat affiché correspond toujours à l'écharpe réellement tirée.
+const ROW_H = 96
+const REELS = [
+  { kind: 'photo', flex: 3, duration: 1.7 },
+  { kind: 'num',   flex: 1.3, duration: 2.5 },
+  { kind: 'era',   flex: 1.5, duration: 3.3 },
 ]
 
-function FortuneWheel({ collection, spinning, targetIndex, onSpinEnd }) {
-  const canvasRef = useRef(null)
-  const angleRef = useRef(0)
-  const rafRef = useRef(null)
-  const n = collection.length
+// Bande de défilement : éléments au hasard, puis le gagnant, puis un élément de fin
+function buildStrip(collection, targetIdx, length) {
+  const winner = collection[targetIdx]
+  const others = collection.filter((_, i) => i !== targetIdx)
+  const pick = () => others.length ? others[Math.floor(Math.random() * others.length)] : winner
+  const strip = Array.from({ length }, pick)
+  strip.push(winner)  // position length : s'arrête au centre
+  strip.push(pick())  // ligne du bas
+  return strip
+}
 
-  const draw = useCallback((angle) => {
-    const canvas = canvasRef.current
-    if (!canvas || n === 0) return
-    const ctx = canvas.getContext('2d')
-    const S = canvas.width
-    const cx = S / 2, cy = S / 2
-    const R = S / 2 - 4
-    const sliceAngle = (2 * Math.PI) / n
-    const numberMap = getNumberMap(collection)
+function ReelCell({ kind, scarf, numberMap }) {
+  if (!scarf) return <div className="font-bebas text-4xl text-jaune/60">?</div>
+  if (kind === 'photo') {
+    return scarf.photo_url
+      ? <img src={cldUrl(scarf.photo_url, 220)} alt="" className="w-full h-full object-contain p-1" />
+      : <span className="text-3xl opacity-30">🧣</span>
+  }
+  if (kind === 'num') {
+    return <div className="font-bebas text-4xl text-jaune leading-none">{numberMap.get(scarf.id) || '---'}</div>
+  }
+  return (
+    <div className="flex flex-col items-center gap-1 px-1">
+      <EraLogo id={scarf.era} size={34} />
+      <div className="label-retro text-[0.58rem] text-argent text-center leading-tight">{getEraLabel(scarf.era) || '—'}</div>
+    </div>
+  )
+}
 
-    ctx.clearRect(0, 0, S, S)
+function SlotMachine({ collection, spinning, spinId, targetIndex, onSpinEnd }) {
+  const numberMap = getNumberMap(collection)
+  const strips = useMemo(() => {
+    if (!spinId) return null
+    return REELS.map((r, i) => buildStrip(collection, targetIndex, 10 + i * 7))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spinId])
 
-    for (let i = 0; i < n; i++) {
-      const startA = angle + i * sliceAngle
-      const endA = startA + sliceAngle
-      const midA = startA + sliceAngle / 2
-
-      // Segment
-      ctx.beginPath()
-      ctx.moveTo(cx, cy)
-      ctx.arc(cx, cy, R, startA, endA)
-      ctx.closePath()
-      ctx.fillStyle = COLORS[i % COLORS.length]
-      ctx.fill()
-      ctx.strokeStyle = 'rgba(245,196,0,0.4)'
-      ctx.lineWidth = 1
-      ctx.stroke()
-
-      // Numéro
-      // Numéro réel de la collection (basé sur la date d'ajout), et non
-      // la position dans le tableau — sinon l'affichage se décale à chaque
-      // nouvel ajout.
-      const num = numberMap.get(String(collection[i]?.id)) ?? '???'
-      const textR = R * 0.68
-      const tx = cx + textR * Math.cos(midA)
-      const ty = cy + textR * Math.sin(midA)
-
-      ctx.save()
-      ctx.translate(tx, ty)
-      ctx.rotate(midA + Math.PI / 2)
-      ctx.fillStyle = '#F5C400'
-      ctx.font = `bold ${Math.max(7, Math.min(14, 280 / n))}px sans-serif`
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText(`#${num}`, 0, 0)
-      ctx.restore()
-    }
-
-    // Cercle extérieur
-    ctx.beginPath()
-    ctx.arc(cx, cy, R, 0, 2 * Math.PI)
-    ctx.strokeStyle = '#F5C400'
-    ctx.lineWidth = 3
-    ctx.shadowColor = '#F5C400'
-    ctx.shadowBlur = 10
-    ctx.stroke()
-    ctx.shadowBlur = 0
-
-    // Centre
-    ctx.beginPath()
-    ctx.arc(cx, cy, 14, 0, 2 * Math.PI)
-    ctx.fillStyle = '#F5C400'
-    ctx.fill()
-    ctx.beginPath()
-    ctx.arc(cx, cy, 8, 0, 2 * Math.PI)
-    ctx.fillStyle = '#001f5c'
-    ctx.fill()
-
-  }, [n, collection])
-
-  // Idle rotation lente
+  // Bruit de tic pendant que les rouleaux tournent
   useEffect(() => {
-    if (spinning || n === 0) return
-    cancelAnimationFrame(rafRef.current)
-    const animate = () => {
-      angleRef.current += 0.004
-      draw(angleRef.current)
-      rafRef.current = requestAnimationFrame(animate)
-    }
-    rafRef.current = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [spinning, n, draw])
-
-  // Spin
-  useEffect(() => {
-    if (!spinning || n === 0) return
-    cancelAnimationFrame(rafRef.current)
-
-    const sliceAngle = (2 * Math.PI) / n
-    // La flèche est à droite (angle 0) — on calcule l'angle final pour que targetIndex soit là
-    const targetAngle = -(targetIndex * sliceAngle + sliceAngle / 2)
-    const fullTurns = (6 + Math.floor(Math.random() * 4)) * 2 * Math.PI
-    const startAngle = angleRef.current
-    // Normaliser pour que la rotation soit toujours dans le bon sens
-    const endAngle = targetAngle - fullTurns
-    const totalDelta = endAngle - startAngle
-
-    const duration = 6500
-    const start = performance.now()
-    let lastSegment = -1
-
-    const animate = (now) => {
-      const t = Math.min((now - start) / duration, 1)
-      // Ease out cubic
-      const ease = 1 - Math.pow(1 - t, 3)
-      const currentAngle = startAngle + totalDelta * ease
-      angleRef.current = currentAngle
-
-      // Son tick par segment
-      const seg = Math.floor(((-currentAngle % (2 * Math.PI)) / (2 * Math.PI)) * n + n) % n
-      if (seg !== lastSegment && t < 0.9) {
-        playTick(300 + (1 - t) * 500)
-        vibrate([3])
-        lastSegment = seg
-      }
-
-      draw(currentAngle)
-
-      if (t < 1) {
-        rafRef.current = requestAnimationFrame(animate)
-      } else {
-        angleRef.current = endAngle
-        draw(endAngle)
-        onSpinEnd()
-      }
-    }
-
-    rafRef.current = requestAnimationFrame(animate)
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [spinning, targetIndex, n])
-
-  useEffect(() => { draw(angleRef.current) }, [collection, draw])
+    if (!spinning) return
+    const t = setInterval(() => playTick(), 110)
+    return () => clearInterval(t)
+  }, [spinning])
 
   return (
-    <div className="relative flex items-center justify-center w-full">
-      {/* Flèche indicateur à droite */}
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex items-center"
-        style={{ right: 'calc(50% - 148px)' }}>
-        <div style={{
-          width: 0, height: 0,
-          borderTop: '12px solid transparent',
-          borderBottom: '12px solid transparent',
-          borderRight: '22px solid #F5C400',
-          filter: 'drop-shadow(0 0 6px #F5C400)'
-        }} />
+    <div className="w-full max-w-xs relative">
+      {/* Fronton */}
+      <div className="bg-jaune text-noir text-center py-2 border-[3px] border-creme border-b-0">
+        <div className="font-bebas text-2xl leading-none uppercase" style={{ transform: 'skewX(-8deg)' }}>Écharpe du jour</div>
       </div>
-      <canvas
-        ref={canvasRef}
-        width={300}
-        height={300}
-        className="rounded-full"
-        style={{ maxWidth: 300 }}
-      />
+      {/* Fenêtre des rouleaux */}
+      <div className="relative flex border-[3px] border-creme bg-surface overflow-hidden" style={{ height: ROW_H * 3 }}>
+        {REELS.map((r, ri) => {
+          const strip = strips ? strips[ri] : null
+          const finalY = strip ? -((strip.length - 3) * ROW_H) : 0
+          return (
+            <div key={r.kind} className={`relative overflow-hidden ${ri > 0 ? 'border-l-[3px] border-creme' : ''}`} style={{ flex: r.flex }}>
+              <motion.div
+                key={spinId}
+                initial={{ y: 0 }}
+                animate={{ y: finalY }}
+                transition={{ duration: spinId ? r.duration : 0, ease: [0.25, 0.9, 0.3, 1] }}
+                onAnimationComplete={() => { if (spinId && ri === REELS.length - 1) onSpinEnd() }}>
+                {(strip || [null, null, null]).map((sc, i) => (
+                  <div key={i} className="flex items-center justify-center overflow-hidden border-b border-bord/50" style={{ height: ROW_H }}>
+                    <ReelCell kind={r.kind} scarf={sc} numberMap={numberMap} />
+                  </div>
+                ))}
+              </motion.div>
+            </div>
+          )
+        })}
+        {/* Fondus haut/bas : seule la ligne centrale est « jouée » */}
+        <div className="absolute left-0 right-0 top-0 pointer-events-none bg-gradient-to-b from-surface via-surface/70 to-transparent" style={{ height: ROW_H * 0.9 }} />
+        <div className="absolute left-0 right-0 bottom-0 pointer-events-none bg-gradient-to-t from-surface via-surface/70 to-transparent" style={{ height: ROW_H * 0.9 }} />
+        {/* Ligne de tirage */}
+        <div className="absolute left-0 right-0 pointer-events-none" style={{ top: ROW_H, height: ROW_H, borderTop: '3px solid #D6362B', borderBottom: '3px solid #D6362B' }} />
+        <div className="absolute pointer-events-none" style={{ left: 0, top: ROW_H * 1.5 - 10, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderLeft: '14px solid #FFC800' }} />
+        <div className="absolute pointer-events-none" style={{ right: 0, top: ROW_H * 1.5 - 10, borderTop: '10px solid transparent', borderBottom: '10px solid transparent', borderRight: '14px solid #FFC800' }} />
+      </div>
+      {/* Socle à ampoules */}
+      <div className="bg-jaune border-[3px] border-creme border-t-0 py-1.5 flex justify-center gap-2.5">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <motion.span key={i} className="w-2 h-2 rounded-full bg-noir"
+            animate={spinning ? { opacity: i % 2 ? [1, 0.2, 1] : [0.2, 1, 0.2] } : { opacity: 0.8 }}
+            transition={{ duration: 0.5, repeat: spinning ? Infinity : 0 }} />
+        ))}
+      </div>
     </div>
   )
 }
@@ -187,6 +124,7 @@ export default function DailyPage() {
   const [spinning, setSpinning] = useState(false)
   const [winner, setWinner] = useState(null)
   const [targetIndex, setTargetIndex] = useState(0)
+  const [spinId, setSpinId] = useState(0)
   const [history, setHistory] = useState(loadHistory)
   const [showHistory, setShowHistory] = useState(false)
 
@@ -196,6 +134,7 @@ export default function DailyPage() {
     setSpinning(true)
     const idx = Math.floor(Math.random() * collection.length)
     setTargetIndex(idx)
+    setSpinId(n => n + 1)
   }, [collection, spinning])
 
   const handleSpinEnd = useCallback(() => {
@@ -230,13 +169,14 @@ export default function DailyPage() {
 
   return (
     <div className="pb-24">
-      <PageHeader title="ÉCHARPE DU JOUR" subtitle="Laisse le hasard choisir 🎲" />
+      <PageHeader title="ÉCHARPE DU JOUR" subtitle="Laisse le hasard choisir" />
       <div className="px-4 pt-4 flex flex-col items-center gap-5">
 
         {collection.length > 0
-          ? <FortuneWheel
+          ? <SlotMachine
               collection={collection}
               spinning={spinning}
+              spinId={spinId}
               targetIndex={targetIndex}
               onSpinEnd={handleSpinEnd}
             />
@@ -247,21 +187,16 @@ export default function DailyPage() {
         }
 
         <motion.button
-          className="w-full max-w-xs py-5 font-bebas text-2xl tracking-[3px] rounded-2xl cursor-pointer disabled:opacity-40"
-          style={{
-            background: spinning ? '#1a2a4a' : '#F5C400',
-            color: spinning ? 'var(--muted)' : '#001f5c',
-            boxShadow: !spinning ? '0 4px 30px rgba(245,196,0,0.4)' : 'none',
-          }}
+          className={`w-full max-w-xs py-4 font-bebas text-3xl uppercase cursor-pointer disabled:opacity-60 border-[3px] border-creme ${spinning ? 'bg-surface text-argent' : 'bg-defaite text-white ombre-dure'}`}
           whileTap={{ scale: 0.96 }}
           onClick={spin}
           disabled={spinning || !collection.length}>
-          {spinning ? '⏳ EN COURS...' : winner ? '🎲 RELANCER' : '🎲 TOURNER LA ROUE'}
+          {spinning ? 'Ça tourne…' : winner ? 'Relancer' : 'Tirer le levier'}
         </motion.button>
 
         <AnimatePresence>
           {winner && (
-            <motion.div className="w-full rounded-2xl overflow-hidden border-2 border-jaune"
+            <motion.div className="w-full overflow-hidden border-[3px] border-creme"
               initial={{ opacity:0, scale:0.9, y:20 }}
               animate={{ opacity:1, scale:1, y:0 }}
               exit={{ opacity:0 }}
@@ -271,12 +206,10 @@ export default function DailyPage() {
                   ? <img src={cldUrl(winner.photo_url, 800)} alt={winner.Name} className="w-full h-full object-contain" />
                   : <span className="text-8xl opacity-10">🧣</span>}
               </div>
-              <div className="text-center py-4 px-5 relative"
-                style={{ background: 'linear-gradient(135deg, #2a1f00, #3d2d00, #2a1f00)', borderTop: '1px solid rgba(245,196,0,0.3)' }}>
-                <div className="absolute inset-[3px] border border-jaune/15 rounded-sm pointer-events-none" />
-                <div className="font-bebas text-jaune/60 text-[0.65rem] tracking-[3px] mb-1">#{getScarfNumber(winner, collection)}</div>
-                <div className="font-bebas text-2xl tracking-[3px] text-jaune">{winner.Name}</div>
-                {winner.era && <div className="text-jaune/70 text-[0.65rem] tracking-[2px] mt-1">⊞ {getEraLabel(winner.era)}</div>}
+              <div className="text-center py-4 px-5 bg-jaune border-t-[3px] border-creme">
+                <div className="inline-block bg-noir text-jaune font-bebas text-3xl leading-none px-3 py-1 mb-2" style={{ transform: 'rotate(-3deg)' }}>{getScarfNumber(winner, collection)}</div>
+                <div className="titre-retro text-3xl text-noir leading-none" style={{ transformOrigin: 'center' }}>{winner.Name}</div>
+                {winner.era && <div className="label-retro text-noir/80 text-[0.62rem] mt-1.5">{getEraLabel(winner.era)}</div>}
               </div>
             </motion.div>
           )}
@@ -284,7 +217,7 @@ export default function DailyPage() {
 
         {history.length > 0 && (
           <motion.button
-            className="w-full py-3 bg-surface border border-bord rounded-2xl font-bebas tracking-widest text-sm text-muted cursor-pointer flex items-center justify-between px-5"
+            className="w-full py-3 bg-surface border-[3px] border-creme  font-bebas tracking-widest text-sm text-muted cursor-pointer flex items-center justify-between px-5"
             whileTap={{ scale:0.97 }}
             onClick={() => setShowHistory(!showHistory)}>
             <span>📋 HISTORIQUE ({history.length} tirages)</span>
@@ -297,7 +230,7 @@ export default function DailyPage() {
             <motion.div className="w-full flex flex-col gap-3"
               initial={{ opacity:0, y:-10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}>
               {topScarves.length > 0 && (
-                <div className="bg-surface border border-bord rounded-2xl p-4">
+                <div className="bg-surface border-[3px] border-creme  p-4">
                   <div className="text-muted text-xs uppercase tracking-widest mb-3">🏆 Les plus tirées</div>
                   {topScarves.map(([name, count]) => (
                     <div key={name} className="flex items-center justify-between py-1.5 border-b border-bord last:border-0">
@@ -307,7 +240,7 @@ export default function DailyPage() {
                   ))}
                 </div>
               )}
-              <div className="bg-surface border border-bord rounded-2xl overflow-hidden">
+              <div className="bg-surface border-[3px] border-creme  overflow-hidden">
                 <div className="text-muted text-xs uppercase tracking-widest p-4 pb-2">🕐 Derniers tirages</div>
                 {history.map((h) => (
                   <motion.div key={h.id}

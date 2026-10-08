@@ -2,8 +2,9 @@ export const ERAS = [
   { id:'1930-1940', label:'1930–1940' },
   { id:'1940-1980', label:'1940–1980' },
   { id:'1990-1994', label:'1990–1994' },
-  { id:'1994-1997', label:'1994–1997' },
-  { id:'1997-2000', label:'1997–2000' },
+  // L'identifiant reste 1994-1997 (valeur stockée en base) : seul le libellé affiché change
+  { id:'1994-1997', label:'1994–1998' },
+  { id:'1997-2000', label:'1998–2000' },
   { id:'2000-2004', label:'2000–2004' },
   { id:'2004-2010', label:'2004–2010' },
   { id:'2010-2015', label:'2010–2015' },
