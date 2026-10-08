@@ -19,6 +19,21 @@ html.light .text-muted { color: #4A5A9A !important; }
 html.light nav { background: #0B1B5A !important; border-color: #FFC800 !important; }
 html.light .bg-bleu2 { background: #FFFDF5 !important; }
 
+/* Lisibilité en thème clair : le jaune et le blanc cassé disparaissent sur le papier crème */
+html.light .text-jaune { color: #7A5800 !important; }
+html.light [class*="text-argent"] { color: #2B3F9A !important; }
+html.light .border-creme { border-color: #0B1B5A !important; }
+html.light .border-argent { border-color: #0B1B5A !important; }
+html.light .border-jaune { border-color: #B58900 !important; }
+html.light .placeholder\:text-argent\/50::placeholder { color: #4A5A9A !important; }
+html.light .focus\:border-jaune:focus { border-color: #0B1B5A !important; }
+html.light input, html.light select, html.light textarea { color: #0B1B5A; }
+/* Les zones qui restent sombres gardent leurs couleurs claires */
+html.light nav .text-jaune { color: #FFC800 !important; }
+html.light nav [class*="text-argent"] { color: #F4EFE0 !important; }
+html.light nav .border-jaune { border-color: #FFC800 !important; }
+html.light .bg-jaune, html.light .bg-jaune .text-noir { color: #0B1B5A !important; }
+
 /* Bande diagonale façon maillot 80s */
 .bande-retro { height: 14px; flex: none; background: repeating-linear-gradient(135deg, #FFC800 0 14px, #F4EFE0 14px 20px, #0B1B5A 20px 34px); }
 /* Titres inclinés */
@@ -51,3 +66,5 @@ html.light .bg-bleu2 { background: #FFFDF5 !important; }
 /* Card hover */
 .scarf-card { transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
 .scarf-card:active { transform: scale(0.96); }
+html.light .border-defaite { border-color: #D6362B !important; }
+html.light .match-bloc, html.light .match-bloc * { color: #FFFFFF !important; }

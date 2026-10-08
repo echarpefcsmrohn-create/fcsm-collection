@@ -123,16 +123,14 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
 
   return (
     <AnimatePresence>
-      <motion.div className="fixed inset-0 z-[300] flex flex-col"
-        style={{ background: '#0B1B5A' }}
+      <motion.div className="fixed inset-0 z-[300] flex flex-col bg-noir"
         initial={{ x:'100%' }} animate={{ x:0 }} exit={{ x:'100%' }}
         transition={{ type:'tween', duration:0.28, ease:[0.32,0.72,0,1] }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}>
 
         {/* PHOTO PLEIN ÉCRAN */}
-        <div className="relative flex-1 overflow-hidden cursor-zoom-in"
-          style={{ background: '#06103A' }}
+        <div className="relative flex-1 overflow-hidden cursor-zoom-in bg-surface"
           onClick={() => !editing && currentPhoto && setLightbox(true)}>
 
           {currentPhoto
@@ -143,32 +141,24 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
                 transition={{ duration:0.3 }} />
             : <div className="absolute inset-0 flex items-center justify-center text-9xl opacity-5">🧣</div>}
 
-          {/* Gradient bottom overlay */}
-          <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-            style={{ background:'linear-gradient(to top, #0B1B5A, transparent)' }} />
-
           {/* Top buttons */}
           <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-12 pb-4">
             <motion.button onClick={(e) => { e.stopPropagation(); onClose() }} whileTap={{ scale:0.9 }}
-              className="w-11 h-11 flex items-center justify-center cursor-pointer text-white text-xl"
-              aria-label="Retour"
-              style={{ background:'#06103A', border:'3px solid #F4EFE0' }}>
+              className="w-11 h-11 flex items-center justify-center cursor-pointer text-white text-xl bg-surface border-[3px] border-creme"
+              aria-label="Retour">
               ←
             </motion.button>
             <div className="flex gap-2">
               <motion.button onClick={(e) => { e.stopPropagation(); handleRotate() }} disabled={rotating} whileTap={{ scale:0.9 }}
-                className="w-11 h-11 flex items-center justify-center cursor-pointer" aria-label="Pivoter la photo"
-                style={{ background:'#06103A', border:'3px solid #F4EFE0' }}>
+                className="w-11 h-11 flex items-center justify-center cursor-pointer bg-surface border-[3px] border-creme" aria-label="Pivoter la photo">
                 {rotating ? <div className="w-4 h-4 border-2 border-jaune/30 border-t-jaune rounded-full animate-spin-slow"/> : <span className="text-jaune">🔄</span>}
               </motion.button>
               <motion.button onClick={(e) => { e.stopPropagation(); setEditing(!editing) }} whileTap={{ scale:0.9 }}
-                className="w-11 h-11 flex items-center justify-center cursor-pointer" aria-label="Modifier"
-                style={{ background: editing ? '#FFC800' : '#06103A', border:'3px solid #F4EFE0' }}>
+                className={`w-11 h-11 flex items-center justify-center cursor-pointer border-[3px] border-creme ${editing ? 'bg-jaune' : 'bg-surface'}`} aria-label="Modifier">
                 <span style={{ filter: editing ? 'none' : '' }}>✏️</span>
               </motion.button>
               <motion.button onClick={(e) => { e.stopPropagation(); handleDelete() }} whileTap={{ scale:0.9 }}
-                className="w-11 h-11 flex items-center justify-center cursor-pointer" aria-label="Supprimer"
-                style={{ background:'#06103A', border:'3px solid #D6362B' }}>
+                className="w-11 h-11 flex items-center justify-center cursor-pointer bg-surface border-[3px] border-defaite" aria-label="Supprimer">
                 🗑
               </motion.button>
             </div>
@@ -182,8 +172,8 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
         </div>
 
         {/* INFO PANEL - glisse depuis le bas */}
-        <motion.div className="flex-shrink-0 overflow-y-auto"
-          style={{ background:'#0B1B5A', borderTop:'3px solid #FFC800', maxHeight: editing ? '70vh' : '45vh' }}>
+        <motion.div className="flex-shrink-0 overflow-y-auto bg-noir border-t-[3px] border-jaune"
+          style={{ maxHeight: editing ? '70vh' : '45vh' }}>
 
           {!editing ? (
             <div className="px-5 pt-4 pb-24">
@@ -217,7 +207,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
 
               {/* Rencontre */}
               {matchResult && (
-                <div className="p-4 mb-4"
+                <div className="p-4 mb-4 match-bloc"
                   style={{ background: matchResult.bg, border: '3px solid #F4EFE0', boxShadow: '4px 4px 0 #F4EFE0' }}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -247,8 +237,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
 
               {/* Bouton détourer */}
               <motion.button onClick={handleReprocess} disabled={reprocessing || !currentPhoto} whileTap={{ scale:0.97 }}
-                className="w-full py-3 label-retro text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
-                style={{ background:'transparent', border:'3px solid #FFC800', color:'#FFC800' }}>
+                className="w-full py-3 label-retro text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 bg-transparent border-[3px] border-jaune text-jaune">
                 {reprocessing
                   ? <><div className="w-4 h-4 border-2 border-jaune/30 border-t-jaune rounded-full animate-spin-slow"/>{reprocessStep}</>
                   : reprocessStep || 'Détourer la photo'}
