@@ -3,14 +3,15 @@ import { motion } from 'framer-motion'
 import { getEraLabel, getScarfNumber } from '../lib/eras'
 import { useCollection } from '../context/CollectionContext'
 import { cldUrl } from '../lib/cloudinary'
-import { getResultStyle, formatScoreFcsm } from '../lib/match'
+import { getResult, RETRO_BADGE, formatScoreFcsm } from '../lib/match'
 
 function ScarfCard({ scarf, onClick }) {
   const { collection } = useCollection()
   const num = getScarfNumber(scarf, collection)
   const eraLabel = getEraLabel(scarf.era)
   const photo = scarf.photo_url
-  const result = getResultStyle(scarf)
+  const resultKey = getResult(scarf)
+  const result = resultKey ? RETRO_BADGE[resultKey] : null
   const score = formatScoreFcsm(scarf)
 
   return (
@@ -33,7 +34,7 @@ function ScarfCard({ scarf, onClick }) {
         {result && score && (
           <div
             className="absolute top-1.5 right-1.5 px-1.5 py-0.5 label-retro text-[0.62rem]"
-            style={{ background: result.bg, border: `2px solid ${result.border}`, color: result.color }}>
+            style={{ background: result.bg, border: '2px solid #F4EFE0', color: result.color }}>
             {score}
           </div>
         )}

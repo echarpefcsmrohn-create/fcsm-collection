@@ -10,6 +10,13 @@ export const RESULTS = {
   loss: { label: 'Défaite',  short: 'D', color: '#ef4444', bg: 'rgba(239,68,68,0.15)',  border: 'rgba(239,68,68,0.5)' },
 }
 
+/** Badges pleins de la DA rétro (texte blanc sur fond uni). */
+export const RETRO_BADGE = {
+  win:  { bg: '#2E9E57', color: '#FFFFFF' },
+  draw: { bg: '#6B7280', color: '#FFFFFF' },
+  loss: { bg: '#D6362B', color: '#FFFFFF' },
+}
+
 /** Retourne 'win' | 'draw' | 'loss' | null si le score n'est pas renseigné. */
 export function getResult(scarf) {
   if (!scarf?.is_match) return null

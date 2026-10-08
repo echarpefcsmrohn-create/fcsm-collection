@@ -9,10 +9,10 @@ import ScarfDetail from '../components/ScarfDetail'
 import PresentationMode from '../components/PresentationMode'
 
 const SORTS = [
-  { id:'date-desc', label:'📅 Récent' },
-  { id:'date-asc',  label:'📅 Ancien' },
-  { id:'era-asc',   label:'🏷 Ère ↑' },
-  { id:'era-desc',  label:'🏷 Ère ↓' },
+  { id:'date-desc', label:'Récent' },
+  { id:'date-asc',  label:'Ancien' },
+  { id:'era-asc',   label:'Ère ↑' },
+  { id:'era-desc',  label:'Ère ↓' },
 ]
 
 export default function CollectionPage() {
@@ -53,14 +53,13 @@ export default function CollectionPage() {
 
   return (
     <div className="pb-24">
-      <PageHeader title="MA COLLECTION">
-    </PageHeader>
+      <PageHeader title="COLLECTION" subtitle={`${collection.length} écharpes`} />
 
       {/* Search */}
       <div className="px-4 pt-3">
         <input
-          className="w-full bg-surface2 border border-bord rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-jaune transition-colors"
-          placeholder="🔍  Rechercher..."
+          className="w-full bg-surface border-[3px] border-creme px-4 py-2.5 text-white text-sm outline-none focus:border-jaune transition-colors label-retro placeholder:text-argent/50"
+          placeholder="N° ou nom…"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -70,7 +69,7 @@ export default function CollectionPage() {
       <div className="flex gap-2 px-4 pt-2 pb-1 overflow-x-auto no-scrollbar">
         {[{ id:'all', label:'Toutes' }, ...ERAS].map(era => (
           <motion.button key={era.id}
-            className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-colors cursor-pointer ${filterEra === era.id ? 'bg-jaune text-bleu2 border-jaune' : 'bg-surface2 text-muted border-bord'}`}
+            className={`flex-shrink-0 px-3 py-1.5 label-retro text-[0.62rem] border-2 transition-colors cursor-pointer ${filterEra === era.id ? 'bg-jaune text-noir border-jaune' : 'bg-transparent text-argent border-creme'}`}
             onClick={() => setFilterEra(era.id)}
             whileTap={{ scale: 0.95 }}
           >
@@ -84,7 +83,7 @@ export default function CollectionPage() {
         <div className="flex gap-2 px-4 pb-2 overflow-x-auto no-scrollbar">
           {SORTS.map(s => (
             <motion.button key={s.id}
-              className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer ${sort === s.id ? 'bg-jaune/10 border-jaune text-jaune' : 'bg-surface2 border-bord text-muted'}`}
+              className={`flex-shrink-0 px-2.5 py-1 label-retro text-[0.58rem] border-2 cursor-pointer ${sort === s.id ? 'border-jaune text-jaune' : 'border-bord text-argent/60'}`}
               onClick={() => setSort(s.id)}
               whileTap={{ scale: 0.95 }}
             >
@@ -103,7 +102,7 @@ export default function CollectionPage() {
         ) : data.length === 0 ? (
           <div className="text-center py-16 text-muted">
             <div className="text-5xl opacity-20 mb-3">🧣</div>
-            <div className="font-bebas text-2xl tracking-widest">
+            <div className="titre-retro text-3xl">
               {search || filterEra !== 'all' ? 'Aucun résultat' : 'Collection vide'}
             </div>
           </div>

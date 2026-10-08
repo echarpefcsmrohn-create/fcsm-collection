@@ -6,7 +6,7 @@ import { uploadToCloudinary, removeBackground } from '../lib/cloudinary'
 import { playDelete, vibrate } from '../lib/sounds'
 import PhotoViewer from './PhotoViewer'
 import { cldUrl } from '../lib/cloudinary'
-import { getResultStyle, formatScore, formatFixture, formatMatchDate } from '../lib/match'
+import { getResult, RETRO_BADGE, formatScore, formatFixture, formatMatchDate, RESULTS } from '../lib/match'
 
 export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
   const { collection, update, remove } = useCollection()
@@ -34,7 +34,8 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
   const num = getScarfNumber(scarf, collection)
   const eraLabel = getEraLabel(currentScarf.era || scarf.era)
   const currentPhoto = currentScarf.photo_url
-  const matchResult = getResultStyle(currentScarf)
+  const matchKey = getResult(currentScarf)
+  const matchResult = matchKey ? { ...RESULTS[matchKey], ...RETRO_BADGE[matchKey] } : null
 
   const handleSave = async () => {
     setSaving(true)
@@ -123,7 +124,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
   return (
     <AnimatePresence>
       <motion.div className="fixed inset-0 z-[300] flex flex-col"
-        style={{ background: '#080C1A' }}
+        style={{ background: '#0B1B5A' }}
         initial={{ x:'100%' }} animate={{ x:0 }} exit={{ x:'100%' }}
         transition={{ type:'tween', duration:0.28, ease:[0.32,0.72,0,1] }}
         onTouchStart={handleTouchStart}
@@ -131,7 +132,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
 
         {/* PHOTO PLEIN ÉCRAN */}
         <div className="relative flex-1 overflow-hidden cursor-zoom-in"
-          style={{ background: 'linear-gradient(160deg, #0a1628 0%, #0d1f3c 60%, #080C1A 100%)' }}
+          style={{ background: '#06103A' }}
           onClick={() => !editing && currentPhoto && setLightbox(true)}>
 
           {currentPhoto
@@ -144,78 +145,80 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
 
           {/* Gradient bottom overlay */}
           <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-            style={{ background:'linear-gradient(to top, #080C1A, transparent)' }} />
+            style={{ background:'linear-gradient(to top, #0B1B5A, transparent)' }} />
 
           {/* Top buttons */}
           <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-12 pb-4">
             <motion.button onClick={(e) => { e.stopPropagation(); onClose() }} whileTap={{ scale:0.9 }}
-              className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer text-white text-xl"
-              style={{ background:'rgba(8,12,26,0.7)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,0.1)' }}>
+              className="w-11 h-11 flex items-center justify-center cursor-pointer text-white text-xl"
+              aria-label="Retour"
+              style={{ background:'#06103A', border:'3px solid #F4EFE0' }}>
               ←
             </motion.button>
             <div className="flex gap-2">
               <motion.button onClick={(e) => { e.stopPropagation(); handleRotate() }} disabled={rotating} whileTap={{ scale:0.9 }}
-                className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
-                style={{ background:'rgba(8,12,26,0.7)', backdropFilter:'blur(12px)', border:'1px solid rgba(245,196,0,0.3)' }}>
+                className="w-11 h-11 flex items-center justify-center cursor-pointer" aria-label="Pivoter la photo"
+                style={{ background:'#06103A', border:'3px solid #F4EFE0' }}>
                 {rotating ? <div className="w-4 h-4 border-2 border-jaune/30 border-t-jaune rounded-full animate-spin-slow"/> : <span className="text-jaune">🔄</span>}
               </motion.button>
               <motion.button onClick={(e) => { e.stopPropagation(); setEditing(!editing) }} whileTap={{ scale:0.9 }}
-                className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
-                style={{ background: editing ? 'rgba(245,196,0,0.9)' : 'rgba(8,12,26,0.7)', backdropFilter:'blur(12px)', border:'1px solid rgba(245,196,0,0.3)' }}>
+                className="w-11 h-11 flex items-center justify-center cursor-pointer" aria-label="Modifier"
+                style={{ background: editing ? '#FFC800' : '#06103A', border:'3px solid #F4EFE0' }}>
                 <span style={{ filter: editing ? 'none' : '' }}>✏️</span>
               </motion.button>
               <motion.button onClick={(e) => { e.stopPropagation(); handleDelete() }} whileTap={{ scale:0.9 }}
-                className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
-                style={{ background:'rgba(8,12,26,0.7)', backdropFilter:'blur(12px)', border:'1px solid rgba(239,68,68,0.4)' }}>
+                className="w-11 h-11 flex items-center justify-center cursor-pointer" aria-label="Supprimer"
+                style={{ background:'#06103A', border:'3px solid #D6362B' }}>
                 🗑
               </motion.button>
             </div>
           </div>
 
           {/* Numéro flottant */}
-          <div className="absolute bottom-4 left-4 font-bebas text-6xl text-white/5 leading-none select-none">
-            #{num}
+          <div className="absolute bottom-4 left-4 bg-jaune text-noir font-bebas text-5xl leading-none px-3 py-1 select-none"
+            style={{ transform:'rotate(-4deg)', border:'3px solid #0B1B5A' }}>
+            {num}
           </div>
         </div>
 
         {/* INFO PANEL - glisse depuis le bas */}
         <motion.div className="flex-shrink-0 overflow-y-auto"
-          style={{ background:'#080C1A', maxHeight: editing ? '70vh' : '45vh' }}>
+          style={{ background:'#0B1B5A', borderTop:'3px solid #FFC800', maxHeight: editing ? '70vh' : '45vh' }}>
 
           {!editing ? (
             <div className="px-5 pt-4 pb-24">
               {/* Nom + ère */}
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex-1">
-                  <div className="font-bebas text-2xl tracking-widest text-jaune leading-tight">
+                  <div className="titre-retro text-3xl text-white leading-none">
                     {currentScarf.Name || scarf.Name}
                   </div>
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                     {(currentScarf.era || scarf.era) && (
-                      <span className="bg-jaune/10 border border-jaune/30 rounded-lg px-2.5 py-0.5 text-jaune text-xs font-semibold">
-                        🏷 {eraLabel}
+                      <span className="border-2 border-jaune px-2.5 py-0.5 text-jaune label-retro text-[0.6rem]">
+                        {eraLabel}
                       </span>
                     )}
-                    <span className="bg-surface border border-bord rounded-lg px-2.5 py-0.5 text-argent text-xs font-bebas">
-                      #{num}
+                    <span className="bg-jaune text-noir px-2.5 py-0.5 label-retro text-[0.6rem]">
+                      N° {num}
                     </span>
                     {(currentScarf.price || scarf.price) && (
-                      <span className="bg-green-500/10 border border-green-500/30 rounded-lg px-2.5 py-0.5 text-green-400 text-xs font-semibold">
-                        💰 {currentScarf.price || scarf.price} €
+                      <span className="border-2 border-argent px-2.5 py-0.5 text-argent label-retro text-[0.6rem]">
+                        {currentScarf.price || scarf.price} €
                       </span>
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="text-muted text-xs mb-4">
+              <div className="label-retro text-argent/60 text-[0.58rem] mb-4">
                 Ajoutée le {new Date(scarf.added_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })}
               </div>
 
               {/* Rencontre */}
               {matchResult && (
-                <div className="rounded-2xl p-4 mb-4"
-                  style={{ background: matchResult.bg, border: `1px solid ${matchResult.border}` }}>
+                <div className="p-4 mb-4"
+                  style={{ background: matchResult.bg, border: '3px solid #F4EFE0', boxShadow: '4px 4px 0 #F4EFE0' }}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="font-bebas text-base tracking-wider text-white truncate">
@@ -231,10 +234,10 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
                       )}
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <div className="font-bebas text-3xl leading-none" style={{ color: matchResult.color }}>
+                      <div className="font-bebas text-4xl leading-none" style={{ color: matchResult.color }}>
                         {formatScore(currentScarf)}
                       </div>
-                      <div className="text-[0.6rem] uppercase tracking-widest mt-1" style={{ color: matchResult.color }}>
+                      <div className="label-retro text-[0.58rem] mt-1" style={{ color: matchResult.color }}>
                         {matchResult.label}
                       </div>
                     </div>
@@ -244,11 +247,11 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
 
               {/* Bouton détourer */}
               <motion.button onClick={handleReprocess} disabled={reprocessing || !currentPhoto} whileTap={{ scale:0.97 }}
-                className="w-full py-3 rounded-2xl font-bebas tracking-widest text-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
-                style={{ background:'rgba(245,196,0,0.08)', border:'1px solid rgba(245,196,0,0.25)', color:'#F5C400' }}>
+                className="w-full py-3 label-retro text-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+                style={{ background:'transparent', border:'3px solid #FFC800', color:'#FFC800' }}>
                 {reprocessing
                   ? <><div className="w-4 h-4 border-2 border-jaune/30 border-t-jaune rounded-full animate-spin-slow"/>{reprocessStep}</>
-                  : reprocessStep || '🪄 DÉTOURER LA PHOTO'}
+                  : reprocessStep || 'Détourer la photo'}
               </motion.button>
             </div>
           ) : (
@@ -256,7 +259,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
               <div className="font-bebas text-lg tracking-widest text-jaune">MODIFIER</div>
               <div>
                 <label className="text-muted text-xs uppercase tracking-widest mb-2 block">Nom</label>
-                <input className="w-full bg-surface2 border border-bord rounded-xl px-4 py-3 text-white outline-none focus:border-jaune text-sm"
+                <input className="w-full bg-surface2 border border-bord px-4 py-3 text-white outline-none focus:border-jaune text-sm"
                   value={editName} onChange={e => setEditName(e.target.value)} />
               </div>
               <div>
@@ -264,7 +267,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
                 <div className="grid grid-cols-3 gap-2">
                   {ERAS.map(e => (
                     <button key={e.id} onClick={() => setEditEra(e.id)}
-                      className={`py-2 rounded-xl border text-xs font-semibold cursor-pointer transition-colors ${editEra === e.id ? 'bg-jaune/15 border-jaune text-jaune' : 'bg-surface2 border-bord text-muted'}`}>
+                      className={`py-2 border text-xs font-semibold cursor-pointer transition-colors ${editEra === e.id ? 'bg-jaune/15 border-jaune text-jaune' : 'bg-surface2 border-bord text-muted'}`}>
                       {e.label}
                     </button>
                   ))}
@@ -272,7 +275,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
               </div>
               <div>
                 <label className="text-muted text-xs uppercase tracking-widest mb-2 block">Prix (€)</label>
-                <input type="number" className="w-full bg-surface2 border border-bord rounded-xl px-4 py-3 text-white outline-none focus:border-jaune text-sm"
+                <input type="number" className="w-full bg-surface2 border border-bord px-4 py-3 text-white outline-none focus:border-jaune text-sm"
                   value={editPrice} onChange={e => setEditPrice(e.target.value)} placeholder="ex: 15" />
               </div>
               {/* Écharpe de match */}
@@ -280,10 +283,10 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
                 <button
                   onClick={() => setEditIsMatch(!editIsMatch)}
                   className="w-full flex items-center gap-3 px-4 py-3 cursor-pointer">
-                  <div className="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors"
+                  <div className="w-5 h-5 border-2 flex items-center justify-center flex-shrink-0 transition-colors"
                     style={{
-                      borderColor: editIsMatch ? '#F5C400' : 'var(--bord)',
-                      background:  editIsMatch ? '#F5C400' : 'transparent',
+                      borderColor: editIsMatch ? '#FFC800' : '#F4EFE0',
+                      background:  editIsMatch ? '#FFC800' : 'transparent',
                     }}>
                     {editIsMatch && <span className="text-bleu2 text-xs font-black">✓</span>}
                   </div>
@@ -295,7 +298,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
                     <div>
                       <label className="text-muted text-xs uppercase tracking-widest mb-1.5 block">Adversaire</label>
                       <input
-                        className="w-full bg-surface border border-bord rounded-xl px-4 py-2.5 text-white outline-none focus:border-jaune text-sm"
+                        className="w-full bg-surface border border-bord px-4 py-2.5 text-white outline-none focus:border-jaune text-sm"
                         value={editOpponent}
                         onChange={e => setEditOpponent(e.target.value)}
                         placeholder="ex : AS Monaco" />
@@ -304,7 +307,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
                     <div>
                       <label className="text-muted text-xs uppercase tracking-widest mb-1.5 block">Compétition</label>
                       <input
-                        className="w-full bg-surface border border-bord rounded-xl px-4 py-2.5 text-white outline-none focus:border-jaune text-sm"
+                        className="w-full bg-surface border border-bord px-4 py-2.5 text-white outline-none focus:border-jaune text-sm"
                         value={editCompetition}
                         onChange={e => setEditCompetition(e.target.value)}
                         placeholder="ex : Finale Coupe de la Ligue" />
@@ -315,7 +318,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
                       <div className="grid grid-cols-2 gap-2">
                         {[{ v: true, l: '🏠 Domicile' }, { v: false, l: '✈️ Extérieur' }].map(o => (
                           <button key={String(o.v)} onClick={() => setEditIsHome(o.v)}
-                            className={`py-2.5 rounded-xl border text-xs font-semibold cursor-pointer transition-colors ${
+                            className={`py-2.5 border text-xs font-semibold cursor-pointer transition-colors ${
                               editIsHome === o.v
                                 ? 'bg-jaune/15 border-jaune text-jaune'
                                 : 'bg-surface border-bord text-muted'}`}>
@@ -330,7 +333,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
                       <div className="flex items-center gap-2">
                         <div className="flex-1">
                           <input type="number" min="0" inputMode="numeric"
-                            className="w-full bg-surface border border-bord rounded-xl px-3 py-2.5 text-white outline-none focus:border-jaune text-sm text-center"
+                            className="w-full bg-surface border border-bord px-3 py-2.5 text-white outline-none focus:border-jaune text-sm text-center"
                             value={editScoreFcsm}
                             onChange={e => setEditScoreFcsm(e.target.value)}
                             placeholder="0" />
@@ -339,7 +342,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
                         <span className="text-muted font-bebas text-lg pb-5">–</span>
                         <div className="flex-1">
                           <input type="number" min="0" inputMode="numeric"
-                            className="w-full bg-surface border border-bord rounded-xl px-3 py-2.5 text-white outline-none focus:border-jaune text-sm text-center"
+                            className="w-full bg-surface border border-bord px-3 py-2.5 text-white outline-none focus:border-jaune text-sm text-center"
                             value={editScoreOpp}
                             onChange={e => setEditScoreOpp(e.target.value)}
                             placeholder="0" />
@@ -353,7 +356,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
                     <div>
                       <label className="text-muted text-xs uppercase tracking-widest mb-1.5 block">Date du match</label>
                       <input type="date"
-                        className="w-full bg-surface border border-bord rounded-xl px-4 py-2.5 text-white outline-none focus:border-jaune text-sm"
+                        className="w-full bg-surface border border-bord px-4 py-2.5 text-white outline-none focus:border-jaune text-sm"
                         value={editMatchDate}
                         onChange={e => setEditMatchDate(e.target.value)} />
                     </div>
@@ -362,7 +365,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
               </div>
 
               <motion.button onClick={handleSave} disabled={saving} whileTap={{ scale:0.97 }}
-                className="w-full py-4 bg-jaune text-bleu2 font-bebas text-xl tracking-widest rounded-2xl cursor-pointer disabled:opacity-50">
+                className="w-full py-4 bg-jaune text-noir font-bebas text-2xl uppercase cursor-pointer disabled:opacity-50 ombre-dure">
                 {saving ? 'SAUVEGARDE...' : 'ENREGISTRER'}
               </motion.button>
             </div>
