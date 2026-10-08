@@ -12,10 +12,10 @@ import StatsPage from './pages/StatsPage'
 import DailyPage from './pages/DailyPage'
 import AddModal from './components/AddModal'
 
+// Transition courte, sans attente de sortie : la nouvelle page s'affiche tout de suite
 const pageVariants = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -10 }
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
 }
 
 function AppContent() {
@@ -33,14 +33,13 @@ function AppContent() {
       {splashDone && (
         <>
           <PullToRefresh onRefresh={load}>
-            <AnimatePresence mode="wait">
+            <AnimatePresence initial={false}>
               <motion.div
                 key={page}
                 variants={pageVariants}
                 initial="initial"
                 animate="animate"
-                exit="exit"
-                transition={{ duration: 0.2 }}
+                                transition={{ duration: 0.12 }}
               >
                 {page === 'home' && <HomePage onNavigate={setPage} />}
                 {page === 'collection' && <CollectionPage />}
