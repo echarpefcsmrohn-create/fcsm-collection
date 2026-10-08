@@ -11,14 +11,14 @@ function AnimatedCount({ value, label, delay = 0, highlight = false }) {
   const animated = useAnimatedNumber(value, 1000)
   return (
     <motion.div
-      className="bg-surface border border-bord rounded-2xl p-4 relative overflow-hidden flex flex-col justify-between"
+      className="bg-surface border-[3px] border-creme p-4 relative overflow-hidden flex flex-col justify-between"
       initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
       transition={{ delay, duration:0.4 }}>
-      {highlight && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-jaune" />}
+      {highlight && <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-jaune" />}
       <div className={`font-bebas text-5xl leading-none ${highlight ? 'text-jaune' : 'text-white'}`}>
         {animated}
       </div>
-      <div className="text-muted text-xs uppercase tracking-widest mt-1">{label}</div>
+      <div className="label-retro text-argent/80 text-[0.62rem] mt-1.5">{label}</div>
     </motion.div>
   )
 }
@@ -33,30 +33,31 @@ export default function HomePage({ onNavigate }) {
   return (
     <div className="pb-24">
       {/* HERO */}
-      <div className="relative overflow-hidden border-b-2 border-jaune px-5 pt-12 pb-6 flex items-center gap-4"
-        style={{ background: 'linear-gradient(150deg, #001f5c 0%, #002575 50%, #003494 100%)' }}>
-        <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(245,196,0,0.06) 0%, transparent 70%)' }} />
+      <div className="relative overflow-hidden border-b-[3px] border-jaune bg-noir">
+      <div className="bande-retro" />
+      <div className="px-5 pt-8 pb-6 flex items-center gap-4">
         <motion.img src={LOGO} alt="FCSM" className="w-16 h-auto flex-shrink-0"
           style={{ filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.5))' }}
           animate={{ scale: [1, 1.03, 1] }}
           transition={{ duration: 3, repeat: Infinity }}
         />
         <div className="flex-1 min-w-0">
-          <div className="font-bebas text-3xl tracking-[3px] text-jaune leading-none">MA COLLECTION</div>
-          <div className="text-argent text-xs tracking-[2px] uppercase mt-1">
-            {loading ? '...' : `${total} écharpe${total !== 1 ? 's' : ''} · FCSM`}
+          <div className="label-retro text-jaune text-[0.6rem]">FC Sochaux-Montbéliard</div>
+          <div className="titre-retro text-5xl text-white leading-[0.88] mt-1">Ma<br />collection</div>
+          <div className="label-retro text-argent/80 text-[0.6rem] mt-2">
+            {loading ? '...' : `${total} écharpe${total !== 1 ? 's' : ''}`}
           </div>
-          <div className="inline-flex items-center gap-1.5 mt-1.5 bg-green-500/15 border border-green-500/30 rounded-full px-2 py-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-dot" />
-            <span className="text-green-400 text-[0.6rem] font-semibold">Synchronisé</span>
+          <div className="inline-flex items-center gap-1.5 mt-1.5 border-2 border-victoire px-2 py-0.5">
+            <span className="w-1.5 h-1.5 bg-victoire animate-pulse-dot" />
+            <span className="label-retro text-victoire text-[0.55rem]">Synchronisé</span>
           </div>
         </div>
         <motion.button onClick={toggle} whileTap={{ scale:0.9 }}
-          className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer text-base flex-shrink-0"
-          style={{ background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.2)' }}>
+          aria-label="Changer de thème"
+          className="w-10 h-10 border-[3px] border-creme flex items-center justify-center cursor-pointer text-base flex-shrink-0 self-start">
           {dark ? '☀️' : '🌙'}
         </motion.button>
+      </div>
       </div>
 
       {/* ANIMATED COUNTERS */}
@@ -68,23 +69,23 @@ export default function HomePage({ onNavigate }) {
       {/* QUICK ACTIONS */}
       <div className="px-4 pt-3 grid grid-cols-2 gap-3">
         <motion.button
-          className="bg-surface border border-bord rounded-2xl p-4 flex items-center gap-3 cursor-pointer"
+          className="bg-surface border-[3px] border-creme p-4 flex items-center gap-3 cursor-pointer"
           whileTap={{ scale:0.95 }} onClick={() => onNavigate('daily')}
           initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }}>
           <span className="text-2xl">🎲</span>
           <div className="text-left">
-            <div className="font-bebas text-sm tracking-widest text-jaune">DU JOUR</div>
-            <div className="text-muted text-xs">Roulette</div>
+            <div className="font-bebas text-xl uppercase text-jaune leading-none">DU JOUR</div>
+            <div className="label-retro text-argent/70 text-[0.55rem] mt-1">Roue</div>
           </div>
         </motion.button>
         <motion.button
-          className="bg-surface border border-bord rounded-2xl p-4 flex items-center gap-3 cursor-pointer"
+          className="bg-surface border-[3px] border-creme p-4 flex items-center gap-3 cursor-pointer"
           whileTap={{ scale:0.95 }} onClick={() => onNavigate('verify')}
           initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.25 }}>
           <span className="text-2xl">🔍</span>
           <div className="text-left">
-            <div className="font-bebas text-sm tracking-widest text-jaune">VÉRIFIER</div>
-            <div className="text-muted text-xs">Anti-doublon</div>
+            <div className="font-bebas text-xl uppercase text-jaune leading-none">VÉRIFIER</div>
+            <div className="label-retro text-argent/70 text-[0.55rem] mt-1">Anti-doublon</div>
           </div>
         </motion.button>
       </div>
@@ -92,11 +93,11 @@ export default function HomePage({ onNavigate }) {
       {/* RECENT */}
       <div className="px-4 pt-5">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-muted text-[0.68rem] uppercase tracking-[2px]">Ajouts récents</span>
-          <div className="flex-1 h-px bg-bord" />
+          <span className="label-retro text-jaune text-[0.65rem]">Ajouts récents</span>
+          <div className="flex-1 h-[3px] bg-bord" />
           {total > 6 && (
             <button onClick={() => onNavigate('collection')}
-              className="text-jaune text-[0.68rem] font-semibold cursor-pointer">
+              className="label-retro text-jaune text-[0.62rem] cursor-pointer">
               Voir tout →
             </button>
           )}
@@ -104,7 +105,7 @@ export default function HomePage({ onNavigate }) {
         {loading ? (
           <div className="grid grid-cols-3 gap-2">
             {Array(6).fill(0).map((_,i) => (
-              <div key={i} className="aspect-square rounded-xl bg-surface2 animate-pulse" />
+              <div key={i} className="aspect-square bg-surface2 animate-pulse" />
             ))}
           </div>
         ) : total === 0 ? (
@@ -117,8 +118,7 @@ export default function HomePage({ onNavigate }) {
           <div className="grid grid-cols-3 gap-2">
             {recent.map((s, i) => (
               <motion.div key={s.id}
-                className="aspect-square rounded-xl overflow-hidden relative cursor-pointer border border-bord"
-                style={{ background:'linear-gradient(135deg, #0a1628, #0d1f3c)' }}
+                className="aspect-square overflow-hidden relative cursor-pointer border-[3px] border-creme bg-surface"
                 whileTap={{ scale:0.94 }}
                 initial={{ opacity:0, scale:0.9 }} animate={{ opacity:1, scale:1 }}
                 transition={{ delay: i * 0.05 }}
@@ -129,7 +129,7 @@ export default function HomePage({ onNavigate }) {
                       style={{ filter:'drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }} />
                   : <div className="w-full h-full flex items-center justify-center text-2xl opacity-20">🧣</div>}
                 <div className="absolute bottom-0 left-0 right-0 px-1.5 py-1"
-                  style={{ background:'linear-gradient(to top, rgba(8,12,26,0.95), transparent)' }}>
+                  style={{ background:'linear-gradient(to top, rgba(6,16,58,0.95), transparent)' }}>
                   <div className="text-white text-[0.55rem] truncate font-medium">{s.Name}</div>
                 </div>
               </motion.div>

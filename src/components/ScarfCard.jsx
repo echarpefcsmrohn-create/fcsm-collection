@@ -15,39 +15,32 @@ function ScarfCard({ scarf, onClick }) {
 
   return (
     <motion.div
-      className="scarf-card bg-surface border border-bord rounded-2xl overflow-hidden cursor-pointer"
+      className="scarf-card bg-creme text-noir border-[3px] border-creme overflow-hidden cursor-pointer"
       whileTap={{ scale: 0.95 }}
-      whileHover={{ borderColor: 'rgba(245,196,0,0.5)', y: -2 }}
       onClick={() => onClick(scarf)}
     >
-      <div className="aspect-[4/3] overflow-hidden flex items-center justify-center relative"
-        style={{ background: 'linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #0a1628 100%)' }}>
+      <div className="aspect-[4/3] overflow-hidden flex items-center justify-center relative bg-surface">
         {photo
           ? <img src={cldUrl(photo, 400)} alt={scarf.Name}
               className="w-full h-full"
               loading="lazy"
-              style={{ objectFit: 'contain', padding: '4px', filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.6))' }} />
+              style={{ objectFit: 'contain', padding: '4px', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.6))' }} />
           : <span className="text-4xl opacity-20">🧣</span>}
-        {/* Subtle gold shimmer overlay */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(245,196,0,0.04) 0%, transparent 70%)' }} />
+        {/* Numéro : badge jaune, repère principal de la collection */}
+        <div className="absolute top-0 left-0 bg-jaune text-noir font-bebas text-2xl leading-none px-2.5 py-1">
+          {num}
+        </div>
         {result && score && (
           <div
-            className="absolute bottom-1.5 right-1.5 rounded-md px-1.5 py-0.5 font-bebas text-[0.7rem] tracking-wider backdrop-blur-sm"
-            style={{ background: result.bg, border: `1px solid ${result.border}`, color: result.color }}>
+            className="absolute top-1.5 right-1.5 px-1.5 py-0.5 label-retro text-[0.62rem]"
+            style={{ background: result.bg, border: `2px solid ${result.border}`, color: result.color }}>
             {score}
           </div>
         )}
-        {(
-          <div className="absolute top-1.5 left-1.5 bg-noir/80 border border-jaune/40 rounded-md px-1.5 py-0.5 text-jaune text-[0.58rem] font-bold backdrop-blur-sm">
-            {eraLabel}
-          </div>
-        )}
       </div>
-      <div className="p-2.5 pb-3 bg-surface">
-        <div className="text-jaune font-bebas text-xs tracking-wide opacity-70">#{num}</div>
-        <div className="text-sm font-semibold truncate text-white leading-tight">{scarf.Name}</div>
-        <div className="text-[0.7rem] text-muted mt-0.5">
+      <div className="px-2.5 py-2 border-t-[3px] border-noir">
+        <div className="text-[0.8rem] font-bold truncate leading-tight">{scarf.Name}</div>
+        <div className="label-retro text-[0.58rem] opacity-70 mt-0.5 truncate">
           {scarf.price ? `${scarf.price} €` : eraLabel || '—'}
         </div>
       </div>

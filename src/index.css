@@ -3,23 +3,30 @@
 @tailwind utilities;
 
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-body { background: #080C1A; color: #EEF2FF; font-family: 'Outfit', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+body { background: #0B1B5A; color: #F4EFE0; font-family: 'Outfit', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
 :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 
-/* LIGHT THEME */
-html.light body { background: #F0F4FF; color: #0D1B40; }
-html.light .bg-noir { background: #F0F4FF !important; }
-html.light .bg-surface { background: #FFFFFF !important; }
-html.light .bg-surface2 { background: #E8EDF8 !important; }
-html.light .bg-surface3 { background: #D8E0F0 !important; }
-html.light .border-bord { border-color: #C8D4EC !important; }
-html.light .text-white { color: #0D1B40 !important; }
-html.light .text-argent { color: #4A5A80 !important; }
-html.light .text-muted { color: #6B7DAA !important; }
-html.light nav { background: #FFFFFF !important; border-color: #F5C400 !important; }
-html.light .bg-bleu2 { background: #FFFFFF !important; }
-html.light [style*="background: '#001f5c'"] { background: #FFFFFF !important; }
-html.light [style*="linear-gradient(150deg, #001f5c"] { background: linear-gradient(150deg, #1a3a8f, #0d2a6f) !important; }
+/* LIGHT THEME : papier crème, encre bleu nuit */
+html.light body { background: #F4EFE0; color: #0B1B5A; }
+html.light .bg-noir { background: #F4EFE0 !important; }
+html.light .bg-surface { background: #FFFDF5 !important; }
+html.light .bg-surface2 { background: #EAE3CC !important; }
+html.light .bg-surface3 { background: #DDD4B6 !important; }
+html.light .border-bord { border-color: #0B1B5A !important; }
+html.light .text-white { color: #0B1B5A !important; }
+html.light .text-argent { color: #2B3F9A !important; }
+html.light .text-muted { color: #4A5A9A !important; }
+html.light nav { background: #0B1B5A !important; border-color: #FFC800 !important; }
+html.light .bg-bleu2 { background: #FFFDF5 !important; }
+
+/* Bande diagonale façon maillot 80s */
+.bande-retro { height: 14px; flex: none; background: repeating-linear-gradient(135deg, #FFC800 0 14px, #F4EFE0 14px 20px, #0B1B5A 20px 34px); }
+/* Titres inclinés */
+.titre-retro { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; text-transform: uppercase; transform: skewX(-8deg); transform-origin: left; }
+/* Étiquette mono (petits labels) */
+.label-retro { font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+/* Ombre dure façon bouton 80s */
+.ombre-dure { box-shadow: 4px 4px 0 #F4EFE0; }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -34,7 +41,7 @@ html.light [style*="linear-gradient(150deg, #001f5c"] { background: linear-gradi
 .animate-splash { animation: splashPulse 1.8s ease-in-out infinite; }
 .animate-slideUp { animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1); }
 
-.font-bebas { font-family: 'Bebas Neue', cursive; }
+.font-bebas { font-family: 'Big Shoulders Display', 'Bebas Neue', sans-serif; font-weight: 900; }
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* Scrollbar hidden */

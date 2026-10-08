@@ -32,11 +32,11 @@ export default function SplashScreen({ onDone }) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[1000] flex flex-col items-center justify-center gap-6"
-      style={{ background: 'linear-gradient(150deg, #001f5c 0%, #002575 50%, #003494 100%)' }}
+      className="fixed inset-0 z-[1000] flex flex-col items-center justify-center gap-6 bg-noir"
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
     >
+      <div className="bande-retro absolute top-0 left-0 right-0" style={{ height: 18 }} />
       <motion.img
         src={LOGO}
         alt="FCSM"
@@ -46,18 +46,18 @@ export default function SplashScreen({ onDone }) {
         transition={{ duration: 1.8, repeat: Infinity }}
       />
       <div className="text-center">
-        <div className="font-bebas text-3xl tracking-[4px] text-jaune">MA COLLECTION</div>
-        <div className="text-argent text-xs tracking-[3px] uppercase mt-1">FC Sochaux-Montbéliard</div>
+        <div className="titre-retro text-5xl text-white leading-none" style={{ transformOrigin: 'center' }}>Ma collection</div>
+        <div className="label-retro text-jaune text-[0.65rem] mt-2">FC Sochaux-Montbéliard</div>
       </div>
       <div className="flex flex-col items-center gap-2 w-52">
-        <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+        <div className="w-full bg-surface border-2 border-creme h-3 overflow-hidden">
           <motion.div
-            className="h-full bg-jaune rounded-full"
+            className="h-full bg-jaune"
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
           />
         </div>
-        <div className="text-argent/70 text-xs tracking-wide">{step}</div>
+        <div className="label-retro text-argent/70 text-[0.6rem]">{step}</div>
       </div>
       <div className="text-white/20 text-[0.58rem] tracking-widest">
         v{__APP_VERSION__}
