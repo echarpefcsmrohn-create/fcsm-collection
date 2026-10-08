@@ -4,7 +4,7 @@ import { useCollection } from '../context/CollectionContext'
 import ScarfCard from '../components/ScarfCard'
 import SkeletonCard from '../components/SkeletonCard'
 import PageHeader from '../components/PageHeader'
-import { ERAS, ERA_ORDER, normalizeEra } from '../lib/eras'
+import { ERAS, ERA_ORDER, normalizeEra, getNumberMap } from '../lib/eras'
 import ScarfDetail from '../components/ScarfDetail'
 import PresentationMode from '../components/PresentationMode'
 import EraLogo from '../components/EraLogo'
@@ -34,8 +34,17 @@ export default function CollectionPage() {
     let d = collection
     if (filterEra !== 'all') d = d.filter(s => normalizeEra(s.era) === filterEra)
     if (deferredSearch) {
-      const q = deferredSearch.toLowerCase()
-      d = d.filter(s => s.Name?.toLowerCase().includes(q))
+      const q = deferredSearch.trim().replace(/^#/, '').toLowerCase()
+      if (q) {
+        // Recherche par numéro (« 42 », « 042 », « #42 ») en plus du nom.
+        // Les numéros viennent de getNumberMap : ils restent identiques à ceux affichés.
+        const numbers = getNumberMap(collection)
+        const isNum = /^\d+$/.test(q)
+        d = d.filter(s =>
+          s.Name?.toLowerCase().includes(q) ||
+          (isNum && Number(numbers.get(String(s.id))) === Number(q))
+        )
+      }
     }
     d = [...d]
     // Dates pré-converties une fois : évite un new Date() par comparaison

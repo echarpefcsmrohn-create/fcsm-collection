@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useCollection } from '../context/CollectionContext'
 import { ERAS, getScarfNumber, normalizeEra } from '../lib/eras'
+import EraLogo from '../components/EraLogo'
 import PageHeader from '../components/PageHeader'
 import { checkVisualDuplicate } from '../lib/embeddings'
 import FreeCropper from '../components/FreeCropper'
@@ -132,8 +133,9 @@ export default function VerifyPage() {
             <div className="grid grid-cols-3 gap-2">
               {ERAS.map(e => (
                 <motion.button key={e.id} whileTap={{ scale:0.93 }}
-                  className={`py-2 rounded-xl border text-xs font-semibold cursor-pointer transition-colors ${result?.eraId === e.id ? 'bg-jaune/15 border-jaune text-jaune' : 'bg-surface2 border-bord text-muted'}`}
+                  className={`py-2 min-h-[84px] flex flex-col items-center justify-center gap-1.5 border-[3px] label-retro text-[0.58rem] cursor-pointer transition-colors ${result?.eraId === e.id ? 'bg-jaune border-jaune text-noir' : 'bg-surface border-creme text-argent'}`}
                   onClick={() => runVerify(e.id)}>
+                  <EraLogo id={e.id} size={40} />
                   {e.label}
                 </motion.button>
               ))}

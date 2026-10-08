@@ -46,7 +46,7 @@ function ReelCell({ kind, scarf, numberMap }) {
       : <span className="text-3xl opacity-30">🧣</span>
   }
   if (kind === 'num') {
-    return <div className="font-bebas text-4xl text-jaune leading-none">{numberMap.get(scarf.id) || '---'}</div>
+    return <div className="font-bebas text-4xl text-jaune leading-none">{numberMap.get(String(scarf.id)) || '---'}</div>
   }
   return (
     <div className="flex flex-col items-center gap-1 px-1">
