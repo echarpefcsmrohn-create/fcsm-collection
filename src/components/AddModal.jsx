@@ -196,7 +196,7 @@ export default function AddModal({ open, onClose }) {
           style={{ background: 'rgba(6,16,58,0.92)' }}
           onClick={e => e.target === e.currentTarget && handleClose()}>
           <motion.div
-            className="bg-surface border-t-2 border-jaune w-full max-w-[480px] rounded-t-3xl max-h-[92vh] overflow-y-auto"
+            className="bg-surface border-t-2 border-jaune w-full max-w-[480px] wide:max-w-[560px] rounded-t-3xl max-h-[92vh] overflow-y-auto"
             initial={{ y:'100%' }} animate={{ y:0 }} exit={{ y:'100%' }}
             transition={{ type:'spring', damping:25, stiffness:300 }}>
 

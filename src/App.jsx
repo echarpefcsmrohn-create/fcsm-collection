@@ -10,6 +10,7 @@ import CollectionPage from './pages/CollectionPage'
 import VerifyPage from './pages/VerifyPage'
 import StatsPage from './pages/StatsPage'
 import DailyPage from './pages/DailyPage'
+import TimelinePage from './pages/TimelinePage'
 import AddModal from './components/AddModal'
 
 // Transition courte, sans attente de sortie : la nouvelle page s'affiche tout de suite
@@ -25,7 +26,8 @@ function AppContent() {
   const { load } = useCollection()
 
   return (
-    <div className="max-w-[480px] mx-auto min-h-screen bg-noir overflow-x-hidden">
+    <div className="max-w-[480px] wide:max-w-[920px] mx-auto min-h-screen bg-noir overflow-x-hidden"
+      style={{ paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
       <AnimatePresence>
         {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
       </AnimatePresence>
@@ -46,6 +48,7 @@ function AppContent() {
                 {page === 'verify' && <VerifyPage />}
                 {page === 'stats' && <StatsPage />}
                 {page === 'daily' && <DailyPage />}
+                {page === 'timeline' && <TimelinePage />}
               </motion.div>
             </AnimatePresence>
           </PullToRefresh>

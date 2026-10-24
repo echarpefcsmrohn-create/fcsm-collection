@@ -106,7 +106,7 @@ export default function StatsPage() {
       <div className="px-4 pt-5 flex flex-col gap-4">
 
         {/* Key stats grid */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 wide:grid-cols-4 gap-3">
           <StatTile icon="🧣" label="Écharpes" value={total} delay={0} highlight />
           <StatTile icon="📸" label="Avec photo" value={avecPhoto} delay={0.1} highlight />
           <StatTile icon="🏷" label="Ères" value={Object.keys(parEra).length} delay={0.2} />

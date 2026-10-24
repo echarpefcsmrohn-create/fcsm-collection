@@ -107,7 +107,7 @@ export default function CollectionPage() {
       {/* Grid */}
       <div className="px-4 pt-2">
         {loading ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 wide:grid-cols-4 xwide:grid-cols-5 gap-3">
             {Array(6).fill(0).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : data.length === 0 ? (
@@ -118,7 +118,7 @@ export default function CollectionPage() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 wide:grid-cols-4 xwide:grid-cols-5 gap-3">
             {data.map((s, i) => (
               <motion.div
                 key={s.id}

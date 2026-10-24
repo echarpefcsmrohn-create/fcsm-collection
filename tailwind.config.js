@@ -2,6 +2,8 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
+      // Écrans larges : iPhone Duo déplié (≈ 626 à 890 px CSS), tablettes
+      screens: { wide: '560px', xwide: '800px' },
       colors: {
         // DA rétro 80-90 : bleu nuit, jaune Sochaux, blanc cassé
         jaune: '#FFC800',

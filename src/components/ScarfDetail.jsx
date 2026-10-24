@@ -124,7 +124,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
 
   return (
     <AnimatePresence>
-      <motion.div className="fixed inset-0 z-[300] flex flex-col bg-noir"
+      <motion.div className="fixed inset-0 z-[300] flex flex-col wide:flex-row bg-noir"
         initial={{ x:'100%' }} animate={{ x:0 }} exit={{ x:'100%' }}
         transition={{ type:'tween', duration:0.28, ease:[0.32,0.72,0,1] }}
         onTouchStart={handleTouchStart}
@@ -173,8 +173,7 @@ export default function ScarfDetail({ scarf, onClose, onPrev, onNext }) {
         </div>
 
         {/* INFO PANEL - glisse depuis le bas */}
-        <motion.div className="flex-shrink-0 overflow-y-auto bg-noir border-t-[3px] border-jaune"
-          style={{ maxHeight: editing ? '70vh' : '45vh' }}>
+        <motion.div className={`flex-shrink-0 overflow-y-auto bg-noir border-t-[3px] border-jaune wide:border-t-0 wide:border-l-[3px] wide:w-[42%] wide:max-h-none ${editing ? 'max-h-[70vh]' : 'max-h-[45vh]'}`}>
 
           {!editing ? (
             <div className="px-5 pt-4 pb-24">

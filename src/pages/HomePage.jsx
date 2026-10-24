@@ -90,6 +90,21 @@ export default function HomePage({ onNavigate }) {
         </motion.button>
       </div>
 
+      {/* FRISE */}
+      <div className="px-4 pt-3">
+        <motion.button
+          className="w-full bg-surface border-[3px] border-creme p-4 flex items-center gap-3 cursor-pointer"
+          whileTap={{ scale:0.97 }} onClick={() => onNavigate('timeline')}
+          initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.1 }}>
+          <span className="text-2xl">🕰️</span>
+          <div className="text-left flex-1">
+            <div className="font-bebas text-xl uppercase text-jaune leading-none">Frise chronologique</div>
+            <div className="label-retro text-argent/70 text-[0.55rem] mt-1">Tes écharpes, ère par ère</div>
+          </div>
+          <span className="font-bebas text-2xl text-jaune">→</span>
+        </motion.button>
+      </div>
+
       {/* RECENT */}
       <div className="px-4 pt-5">
         <div className="flex items-center gap-2 mb-3">
@@ -103,7 +118,7 @@ export default function HomePage({ onNavigate }) {
           )}
         </div>
         {loading ? (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 wide:grid-cols-6 gap-2">
             {Array(6).fill(0).map((_,i) => (
               <div key={i} className="aspect-square bg-surface2 animate-pulse" />
             ))}
@@ -115,7 +130,7 @@ export default function HomePage({ onNavigate }) {
             <div className="text-muted text-sm mt-1">Appuie sur <span className="text-jaune font-bold">+</span> pour commencer !</div>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 wide:grid-cols-6 gap-2">
             {recent.map((s, i) => (
               <motion.div key={s.id}
                 className="aspect-square overflow-hidden relative cursor-pointer border-[3px] border-creme bg-surface"
