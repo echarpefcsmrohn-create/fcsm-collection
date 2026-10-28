@@ -29,8 +29,5 @@ export default {
       }
     }
   },
-  plugins: [
-    // variante rail: : active quand <html> porte la classe has-rail (ecran ferme de l'iPhone Duo)
-    function ({ addVariant }) { addVariant('rail', '.has-rail &') }
-  ]
+  plugins: []
 }

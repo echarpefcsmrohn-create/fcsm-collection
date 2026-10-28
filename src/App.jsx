@@ -27,7 +27,7 @@ function AppContent() {
 
   return (
     <div className="max-w-[480px] wide:max-w-[920px] mx-auto min-h-screen bg-noir overflow-x-hidden"
-      style={{ paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'var(--rail-pad, env(safe-area-inset-right))' }}>
+      style={{ paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
       <AnimatePresence>
         {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
       </AnimatePresence>
