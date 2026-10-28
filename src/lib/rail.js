@@ -33,7 +33,7 @@ function maj() {
   const actif = force === '1' || (force !== '0' && insetDroit() >= SEUIL)
   const r = document.documentElement
   r.classList.toggle('has-rail', actif)
-  r.style.setProperty('--rail-pad', actif ? 'max(env(safe-area-inset-right, 0px), 88px)' : 'env(safe-area-inset-right, 0px)')
+  r.style.setProperty('--rail-pad', actif ? '88px' : 'env(safe-area-inset-right, 0px)')
 }
 
 // Reglage depuis l'app (une app installee n'a pas d'URL pour ?rail=)

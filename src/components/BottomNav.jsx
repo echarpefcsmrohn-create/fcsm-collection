@@ -33,7 +33,7 @@ const navItems = [
 export default function BottomNav({ current, onNavigate, onAdd }) {
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] border-t-[3px] border-jaune flex z-50 safe-bottom
-      rail:bottom-auto rail:top-1/2 rail:-translate-y-1/2 rail:left-auto rail:translate-x-0 rail:right-[max(4px,calc((env(safe-area-inset-right)_-_72px)/2))] rail:w-[72px] rail:max-w-none wide:max-w-none rail:flex-col rail:border-[3px] rail:p-0 rail:shadow-[4px_4px_0_#F4EFE0]"
+      rail:top-auto rail:bottom-[max(12px,env(safe-area-inset-bottom))] rail:left-auto rail:translate-x-0 rail:right-2 rail:w-[72px] rail:max-w-none wide:max-w-none rail:flex-col rail:border-[3px] rail:p-0 rail:shadow-[4px_4px_0_#F4EFE0]"
       style={{ background: '#06103A' }}>
       {navItems.map(item => {
         if (item.id === 'add') return (
