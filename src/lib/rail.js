@@ -13,22 +13,37 @@ function insetDroit() {
 }
 
 function lireForce() {
+  try { return localStorage.getItem('fcsm_rail') } catch { return null }
+}
+
+// ?rail= n'est lu qu'au demarrage, sinon il ecraserait le reglage fait dans l'app
+function lireUrl() {
   try {
     const q = new URLSearchParams(location.search).get('rail')
     if (q === '1' || q === '0') localStorage.setItem('fcsm_rail', q)
     if (q === 'auto') localStorage.removeItem('fcsm_rail')
-    return localStorage.getItem('fcsm_rail')
-  } catch { return null }
+  } catch { /* stockage indisponible */ }
+}
+
+// Mode choisi : 'auto' | '1' (rail) | '0' (barre en bas)
+export const getRailMode = () => lireForce() ?? 'auto'
+
+function maj() {
+  const force = lireForce()
+  const actif = force === '1' || (force !== '0' && insetDroit() >= SEUIL)
+  const r = document.documentElement
+  r.classList.toggle('has-rail', actif)
+  r.style.setProperty('--rail-pad', actif ? 'max(env(safe-area-inset-right, 0px), 88px)' : 'env(safe-area-inset-right, 0px)')
+}
+
+// Reglage depuis l'app (une app installee n'a pas d'URL pour ?rail=)
+export function setRailMode(mode) {
+  try { mode === 'auto' ? localStorage.removeItem('fcsm_rail') : localStorage.setItem('fcsm_rail', mode) } catch { /* stockage indisponible */ }
+  maj()
 }
 
 export function initRail() {
-  const force = lireForce()
-  const maj = () => {
-    const actif = force === '1' || (force !== '0' && insetDroit() >= SEUIL)
-    const r = document.documentElement
-    r.classList.toggle('has-rail', actif)
-    r.style.setProperty('--rail-pad', actif ? 'max(env(safe-area-inset-right, 0px), 88px)' : 'env(safe-area-inset-right, 0px)')
-  }
+  lireUrl()
   maj()
   window.addEventListener('resize', maj)
   window.addEventListener('orientationchange', maj)
