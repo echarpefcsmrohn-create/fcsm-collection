@@ -3,7 +3,7 @@ export default {
   theme: {
     extend: {
       // Écrans larges : iPhone Duo déplié (≈ 626 à 890 px CSS), tablettes
-      screens: { rail: '470px', wide: '560px', xwide: '800px' },
+      screens: { wide: '560px', xwide: '800px' },
       colors: {
         // DA rétro 80-90 : bleu nuit, jaune Sochaux, blanc cassé
         jaune: '#FFC800',
@@ -29,5 +29,8 @@ export default {
       }
     }
   },
-  plugins: []
+  plugins: [
+    // variante rail: : active quand <html> porte la classe has-rail (ecran ferme de l'iPhone Duo)
+    function ({ addVariant }) { addVariant('rail', '.has-rail &') }
+  ]
 }
