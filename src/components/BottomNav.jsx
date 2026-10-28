@@ -32,11 +32,12 @@ const navItems = [
 
 export default function BottomNav({ current, onNavigate, onAdd }) {
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] wide:max-w-[920px] border-t-[3px] border-jaune flex z-50 safe-bottom"
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] border-t-[3px] border-jaune flex z-50 safe-bottom
+      rail:bottom-auto rail:top-1/2 rail:-translate-y-1/2 rail:left-auto rail:translate-x-0 rail:right-[max(8px,env(safe-area-inset-right))] rail:w-[72px] rail:max-w-none wide:max-w-none rail:flex-col rail:border-[3px] rail:p-0 rail:shadow-[4px_4px_0_#F4EFE0]"
       style={{ background: '#06103A' }}>
       {navItems.map(item => {
         if (item.id === 'add') return (
-          <div key="add" className="flex-1 flex flex-col items-center justify-center cursor-pointer relative -top-4" onClick={onAdd}>
+          <div key="add" className="flex-1 flex flex-col items-center justify-center cursor-pointer relative -top-4 rail:top-0 rail:flex-none rail:py-3" onClick={onAdd}>
             <motion.div
               className="w-14 h-14 bg-jaune rounded-full flex items-center justify-center"
               style={{ border: '4px solid #06103A', boxShadow: '0 0 0 3px #F4EFE0' }}
@@ -47,19 +48,19 @@ export default function BottomNav({ current, onNavigate, onAdd }) {
                 <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
             </motion.div>
-            <span className="label-retro text-argent/70 text-[0.5rem] mt-2">Ajouter</span>
+            <span className="label-retro text-argent/70 text-[0.5rem] mt-2 [@media(max-height:430px)]:hidden">Ajouter</span>
           </div>
         )
         const isActive = current === item.id
         return (
           <motion.button
             key={item.id}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-3 border-none bg-transparent cursor-pointer ${isActive ? 'text-jaune' : 'text-argent/70'}`}
+            className={`flex-1 rail:flex-none flex flex-col items-center gap-0.5 py-3 rail:py-2.5 border-none bg-transparent cursor-pointer ${isActive ? 'text-jaune' : 'text-argent/70'}`}
             onClick={() => { playNav(); vibrate([8]); onNavigate(item.id) }}
             whileTap={{ scale: 0.9 }}
           >
             <span>{item.icon}</span>
-            <span className="label-retro text-[0.5rem]">{item.label}</span>
+            <span className="label-retro text-[0.5rem] [@media(max-height:430px)]:hidden">{item.label}</span>
           </motion.button>
         )
       })}
